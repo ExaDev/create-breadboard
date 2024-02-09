@@ -35,14 +35,13 @@ jobs:
           INCREMENTED_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
           echo "INCREMENTED_VERSION=$INCREMENTED_VERSION" >> $GITHUB_ENV
 
-      - run: current branch name is ${{ github.ref_name }}
       # Set pre-release version based on branch
       - name: Set pre-release version
         run: |
           NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.$TIMESTAMP"
 
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          npm --no-git-tag-version version $NEW_VERSION
+          npm --no-git-tag-version version $NEW_VERSION --tag=${{ github.ref_name }}
 
       # Publish package
       - name: Publish to npm

@@ -31,7 +31,7 @@ import HelloWorld from './components/HelloWorld.vue'
   filter: drop-shadow(0 0 2em #42b883aa);
 }
 
-.logo.vue:breadboard {
-  filter: drop-shadow(0 0 2em #FFFFFFaa);
+.logo.breadboard:hover {
+  filter: drop-shadow(0 0 2em #FFAC04aa);
 }
 </style>

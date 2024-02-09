@@ -41,10 +41,10 @@ jobs:
           NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.$TIMESTAMP"
 
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          npm --no-git-tag-version version $NEW_VERSION --tag=${{ github.ref_name }}
+          npm --no-git-tag-version version $NEW_VERSION
 
       # Publish package
       - name: Publish to npm
-        run: npm publish
+        run: npm publish --tag=${{ github.ref_name }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

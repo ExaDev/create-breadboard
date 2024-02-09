@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import board from "../board";
 
 defineProps<{ msg: string }>()
 
 const count = ref(0)
+let boardMessage = ref("");
+
+onMounted(async () => {
+  const { output } = await board({ message: "Hello, Breadboard!" });
+  boardMessage.value = output as string;
+})
 </script>
 
 <template>
@@ -17,6 +24,7 @@ const count = ref(0)
     </p>
   </div>
 
+  <p>Board Output: {{ boardMessage }}</p>
   
   <p class="read-the-docs">Click on the Vite, Vue and Breadboard logos to learn more</p>
 </template>

@@ -1,0 +1,51 @@
+name: Publish Package to npmjs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      # Generate a timestamp
+      - name: Generate timestamp
+        run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      # Read current version and increment patch number
+      - name: Increment version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          PATCH_VERSION=$((VERSION_PARTS[2] + 1))
+          INCREMENTED_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
+          echo "INCREMENTED_VERSION=$INCREMENTED_VERSION" >> $GITHUB_ENV
+
+      # Set pre-release version based on branch
+      - name: Set pre-release version
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+            NEW_VERSION="${{ env.INCREMENTED_VERSION }}-develop.$TIMESTAMP"
+          else
+            NEW_VERSION="${{ env.INCREMENTED_VERSION }}-master.$TIMESTAMP"
+          fi
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+            npm --no-git-tag-version version $NEW_VERSION
+
+      # Publish package
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

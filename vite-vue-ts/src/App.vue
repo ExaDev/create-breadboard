@@ -10,8 +10,11 @@ import HelloWorld from './components/HelloWorld.vue'
     <a href="https://vuejs.org/" target="_blank">
       <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
     </a>
+     <a href="https://breadboard-ai.github.io/breadboard/" target="_blank">
+      <img src="./assets/breadboard.png" class="logo breadboard" alt="Breadboard logo" />
+    </a>
   </div>
-  <HelloWorld msg="Vite + Vue" />
+  <HelloWorld msg="Vite + Vue + Breadboard" />
 </template>
 
 <style scoped>
@@ -26,5 +29,9 @@ import HelloWorld from './components/HelloWorld.vue'
 }
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
+}
+
+.logo.vue:breadboard {
+  filter: drop-shadow(0 0 2em #FFFFFFaa);
 }
 </style>

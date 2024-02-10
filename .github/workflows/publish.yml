@@ -19,7 +19,6 @@ jobs:
         run: echo "time=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
 
   install:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
@@ -35,47 +34,8 @@ jobs:
           name: node_modules
           path: node_modules
 
-  build:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@main
-        with:
-          name: node_modules
-      - run: npm run build
-      - uses: actions/upload-artifact@main
-        with:
-          name: dist
-          path: dist
-
-  test-ts:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-      - uses: actions/download-artifact@main
-        with:
-          name: node_modules
-      - run: npm run test:ts -- ${{ env.TEST_ARGS }}
-        env:
-          TEST_ARGS: "--template=foo test"
-      - run: ls -la
-
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-      - uses: actions/download-artifact@main
-        with:
-          name: dist
-      - run: npm test -- ${{ env.TEST_ARGS }}
-        env:
-          TEST_ARGS: "--template=foo test"
-      - run: ls -la
-
   versioning:
-    needs: test
+    needs: install
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.set_version.outputs.version }}
@@ -96,8 +56,52 @@ jobs:
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
           npm --no-git-tag-version version $NEW_VERSION
 
+  build:
+    needs:
+      - versioning
+      - setup
+      - install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@main
+        with:
+          name: node_modules
+      - run: npm run build
+      - uses: actions/upload-artifact@main
+        with:
+          name: dist
+          path: dist
+
+  test_ts:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - run: |
+          unset CI
+          npm ci
+      - run: npm run test:ts -- ${{ env.TEST_ARGS }}
+        env:
+          TEST_ARGS: "--template=foo test"
+      - run: ls -la
+
+  test_js:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/download-artifact@main
+        with:
+          name: dist
+      - run: npm test -- ${{ env.TEST_ARGS }}
+        env:
+          TEST_ARGS: "--template=foo test"
+      - run: ls -la
+
   publish:
-    needs: versioning
+    needs:
+      - test_js
+      - test_ts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main

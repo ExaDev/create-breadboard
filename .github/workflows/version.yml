@@ -1,0 +1,54 @@
+name: Create Draft Release with Version Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      version-type:
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
+        default: patch
+
+jobs:
+  update_version_and_create_release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@main
+
+      - name: Update package version
+        run: npm version ${{ github.event.inputs.version-type }} --no-git-tag-version
+
+      - name: Get updated package version
+        id: get_version
+        run: echo VERSION=$(npm --no-git-tag-version version) >> $GITHUB_ENV
+
+      - name: Commit updated package version
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git commit -am "v$VERSION"
+          git push
+
+      - name: Create Draft Release
+        id: create_release
+        uses: actions/create-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
+          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          draft: true
+          prerelease: false
+          body: "Draft release for version v${{ steps.get_version.outputs.VERSION }}"

@@ -84,10 +84,22 @@ jobs:
       - uses: actions/download-artifact@main
         with:
           name: dist
+      - run: |
+          if [ -d ${{ matrix.template }} ]; then
+            echo "Directory with name of the template exists"
+            exit 1
+          fi
       - run: ${{ matrix.command }} -- ${{ env.TEST_ARGS }}
         env:
           TEST_ARGS: "--template=${{ matrix.template }} ${{ matrix.template }}"
-      - run: ls -la
+      - run: ls -la ${{ matrix.template }}
+      - run: |
+          if [ -d ${{ matrix.template }} ]; then
+            echo "Directory with name of the template exists"
+          else
+            echo "Directory with name of the template does not exist"
+            exit 1
+          fi
 
   publish:
     needs:

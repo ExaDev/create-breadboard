@@ -2,7 +2,6 @@
 	import svelteLogo from "./assets/svelte.svg";
 	import breadboardLogo from "./assets/breadboard.png";
 	import viteLogo from "/vite.svg";
-	import Counter from "./lib/Counter.svelte";
 	import Breadboard from "./lib/Breadboard.svelte";
 </script>
 

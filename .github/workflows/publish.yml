@@ -89,7 +89,10 @@ jobs:
             echo "Directory with name of the template exists"
             exit 1
           fi
-      - run: ${{ matrix.command }} -- ${{ env.TEST_ARGS }}
+      - run: |
+          ls -al
+          ls -al dist || true
+          ${{ matrix.command }} -- ${{ env.TEST_ARGS }}
         env:
           TEST_ARGS: "--template=${{ matrix.template }} ${{ matrix.template }}"
       - run: ls -la ${{ matrix.template }}

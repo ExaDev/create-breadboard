@@ -8,44 +8,75 @@ on:
       - develop
 
 jobs:
-  build:
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.timestamp.outputs.time }}
     steps:
       - uses: actions/checkout@main
-
       - uses: actions/setup-node@main
         with:
           node-version: "20.x"
           registry-url: "https://registry.npmjs.org"
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "::set-output name=time::$(date +%Y%m%d%H%M%S)"
 
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
       - run: |
           unset CI
           npm install
-
       - run: npm run build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@main
+        with:
+          name: build-artifacts
+          path: |
+            node_modules
+            dist
 
-      # Generate a timestamp
-      - name: Generate timestamp
-        run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - name: Download build artifacts
+        uses: actions/download-artifact@main
+        with:
+          name: build-artifacts
+      - run: npm test
 
-      # Read current version and increment patch number
+  versioning:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.set_version.outputs.version }}
+    steps:
+      - uses: actions/checkout@main
       - name: Increment version
+        id: increment_version
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
           PATCH_VERSION=$((VERSION_PARTS[2] + 1))
           INCREMENTED_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
           echo "INCREMENTED_VERSION=$INCREMENTED_VERSION" >> $GITHUB_ENV
-
-      # Set pre-release version based on branch
       - name: Set pre-release version
+        id: set_version
         run: |
-          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.$TIMESTAMP"
-
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.${{ needs.setup.outputs.timestamp }}"
+          echo "::set-output name=version::$NEW_VERSION"
           npm --no-git-tag-version version $NEW_VERSION
 
-      # Publish package
+  publish:
+    needs: versioning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
       - name: Publish to npm
         run: npm publish --tag=${{ github.ref_name }}
         env:

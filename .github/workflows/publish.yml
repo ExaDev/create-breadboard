@@ -81,7 +81,7 @@ jobs:
       - uses: actions/checkout@main
       - run: |
           unset CI
-          npm ci
+          npm install
       - run: npm run test:ts -- ${{ env.TEST_ARGS }}
         env:
           TEST_ARGS: "--template=foo test"

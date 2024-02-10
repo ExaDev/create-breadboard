@@ -84,6 +84,7 @@ jobs:
       - uses: actions/download-artifact@main
         with:
           name: dist
+          path: dist
       - run: |
           if [ -d ${{ matrix.template }} ]; then
             echo "Directory with name of the template exists"
@@ -114,6 +115,7 @@ jobs:
       - uses: actions/download-artifact@main
         with:
           name: dist
+          path: dist
       - uses: actions/download-artifact@main
         with:
           name: package

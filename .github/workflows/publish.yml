@@ -114,7 +114,7 @@ jobs:
       - build
       - test
     runs-on: ubuntu-latest
-    if : ${{ github.ref_name == 'main' || github.ref_name == 'develop' }}
+    if : ${{ github.ref_name == 'main' || github.ref_name == 'develop' || ( github.event_name == 'release' && github.event.action == 'published' ) }}
     steps:
       - uses: actions/checkout@main
       - uses: ./.github/actions/setup

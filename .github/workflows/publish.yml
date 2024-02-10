@@ -112,6 +112,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
+      - uses: ./.github/actions/setup
+        with:
+          regular-install: true
       - uses: actions/download-artifact@main
         with:
           name: dist

@@ -35,7 +35,9 @@ jobs:
           path: node_modules
 
   versioning:
-    needs: install
+    needs:
+      - setup
+      - install
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.set_version.outputs.version }}

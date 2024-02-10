@@ -24,6 +24,10 @@ function findPackageRoot(directory: string): string {
 	return findPackageRoot(parentDirectory);
 }
 
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const packageRoot = findPackageRoot(__dirname);
 
 const samplesDir = path.join(packageRoot, 'templates');

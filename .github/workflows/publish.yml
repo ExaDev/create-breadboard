@@ -52,8 +52,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
-        with:
-          sparse-checkout: .github/actions
       - uses: actions/download-artifact@main
         with:
           name: package
@@ -93,6 +91,7 @@ jobs:
 
   publish:
     needs:
+      - build
       - test
     runs-on: ubuntu-latest
     steps:

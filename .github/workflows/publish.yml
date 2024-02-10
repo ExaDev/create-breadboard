@@ -84,12 +84,16 @@ jobs:
       - uses: actions/download-artifact@main
         with:
           name: dist
+          path: dist
       - run: |
           if [ -d ${{ matrix.template }} ]; then
             echo "Directory with name of the template exists"
             exit 1
           fi
-      - run: ${{ matrix.command }} -- ${{ env.TEST_ARGS }}
+      - run: |
+          ls -al
+          ls -al dist || true
+          ${{ matrix.command }} -- ${{ env.TEST_ARGS }}
         env:
           TEST_ARGS: "--template=${{ matrix.template }} ${{ matrix.template }}"
       - run: ls -la ${{ matrix.template }}
@@ -108,9 +112,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
+      - uses: ./.github/actions/setup
+        with:
+          regular-install: true
       - uses: actions/download-artifact@main
         with:
           name: dist
+          path: dist
       - uses: actions/download-artifact@main
         with:
           name: package

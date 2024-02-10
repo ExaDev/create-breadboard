@@ -32,7 +32,7 @@ jobs:
 
       - name: Get updated package version
         id: get_version
-        run: echo VERSION=$(npm --no-git-tag-version version) >> $GITHUB_ENV
+        run: echo VERSION=$(npm --no-git-tag-version version) >> $GITHUB_OUTPUT
 
       - name: Commit updated package version
         run: |

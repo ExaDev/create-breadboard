@@ -38,7 +38,7 @@ jobs:
           echo "INCREMENTED_VERSION=$INCREMENTED_VERSION" >> $GITHUB_ENV
       - name: Set pre-release version
         id: set_version
-        if: github.event_name != 'pull_request' || github.event_name != 'release'
+        if: github.event_name != 'pull_request' && github.event_name != 'release'
         run: |
           NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.${{ needs.setup.outputs.timestamp }}"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT

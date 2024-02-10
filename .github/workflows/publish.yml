@@ -39,6 +39,16 @@ jobs:
             node_modules
             dist
 
+  test-ts:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - run: npm run test:ts -- ${{ env.TEST_ARGS }}
+        env:
+          TEST_ARGS: "--template=foo test"
+      - run: ls -la
+
   test:
     needs: build
     runs-on: ubuntu-latest
@@ -51,6 +61,7 @@ jobs:
       - run: npm test -- ${{ env.TEST_ARGS }}
         env:
           TEST_ARGS: "--template=foo test"
+      - run: ls -la
 
   versioning:
     needs: test

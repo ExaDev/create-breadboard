@@ -31,8 +31,7 @@ jobs:
         run: npm version ${{ github.event.inputs.version-type }} --no-git-tag-version
 
       - name: Get updated package version
-        id: get_version
-        run: echo VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
+        run: echo VERSION=$(node -p "require('./package.json').version") >> $GITHUB_ENV
 
       - name: Commit updated package version
         run: |
@@ -47,8 +46,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.get_version.outputs.VERSION }}
-          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          tag_name: v${{ env.VERSION }}
+          release_name: Release v${{ env.VERSION }}
           draft: true
           prerelease: false
-          body: "Draft release for version v${{ steps.get_version.outputs.VERSION }}"
+          body: "Draft release for version v${{ env.VERSION }}"

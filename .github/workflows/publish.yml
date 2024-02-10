@@ -51,10 +51,13 @@ jobs:
       - setup
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@main
+        with:
+          sparse-checkout: .github/actions
       - uses: actions/download-artifact@main
         with:
           name: package
-      - uses: ./.github/actions/setup/action.yml
+      - uses: ./.github/actions/setup
       - run: npm run build
       - run: ls -la
       - run: ls -la dist
@@ -74,6 +77,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@main
+      - uses: ./.github/actions/setup
       - uses: actions/download-artifact@main
         with:
           name: dist

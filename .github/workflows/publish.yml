@@ -3,10 +3,7 @@ name: Publish Package to npmjs
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - develop
-
+  pull_request:
 
 jobs:
   setup:
@@ -73,7 +70,7 @@ jobs:
           - npm run test:js
           - npm run test:ts
         template:
-          - foo
+          - vite-vue-ts
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -84,6 +81,7 @@ jobs:
       - uses: actions/download-artifact@main
         with:
           name: dist
+          path: dist
       - run: |
           if [ -d ${{ matrix.template }} ]; then
             echo "Directory with name of the template exists"
@@ -109,11 +107,16 @@ jobs:
       - build
       - test
     runs-on: ubuntu-latest
+    if : ${{ github.ref_name == 'main' || github.ref_name == 'develop' }}
     steps:
       - uses: actions/checkout@main
+      - uses: ./.github/actions/setup
+        with:
+          regular-install: true
       - uses: actions/download-artifact@main
         with:
           name: dist
+          path: dist
       - uses: actions/download-artifact@main
         with:
           name: package

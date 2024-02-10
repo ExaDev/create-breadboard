@@ -32,9 +32,9 @@
 	"main": "./dist/index.cjs",
 	"name": "create-breadboard",
 	"scripts": {
-		"build": "unbuild",
+		"build": "unbuild && chmod +x ./dist/*",
 		"dev": "unbuild --stub",
-		"prepublishOnly": "npm run build && chmod +x ./dist/*",
+		"prepublishOnly": "chmod +x ./dist/*",
 		"test:js": "npm i -g . && npx create-breadboard",
 		"test:ts": "npx -y tsx src/index.ts",
 		"typecheck": "tsc --noEmit"

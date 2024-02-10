@@ -1,3 +1,3 @@
 # create-breadboard
 
-Scaffold a breadboard app 
+Scaffold a breadboard app

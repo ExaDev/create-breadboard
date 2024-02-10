@@ -1,0 +1,37 @@
+name: "Setup"
+description: "Checkout, setup Node.js and install dependencies"
+inputs:
+  node-version:
+    description: "Node Version"
+    required: true
+    default: "21.x"
+  registry-url:
+    description: "Registry URL"
+    required: true
+    default: "https://registry.npmjs.org"
+  regular-install:
+    description: "Regular Install"
+    required: false
+    default: "false"
+outputs:
+  random-number:
+    description: "Random number"
+    value: ${{ steps.random-number-generator.outputs.random-number }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@main
+    - uses: actions/setup-node@main
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: ${{ inputs.registry-url }}
+    - if: ${{ inputs.regular-install == 'true' }}
+      shell: bash
+      run: |
+        unset CI
+        npm install
+        export CI=true
+    - if: ${{ inputs.regular-install != 'true' }}
+      shell: bash
+      run: npm ci

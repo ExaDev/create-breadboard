@@ -35,7 +35,7 @@
 		"build": "unbuild",
 		"dev": "unbuild --stub",
 		"prepublishOnly": "npm run build && chmod +x ./dist/*",
-		"test": "npm run build && npm i -g . && npx create-breadboard test",
+		"test": "npm i -g . && npx create-breadboard test",
 		"typecheck": "tsc --noEmit"
 	},
 	"type": "module",

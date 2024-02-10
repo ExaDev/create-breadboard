@@ -48,7 +48,9 @@ jobs:
         uses: actions/download-artifact@main
         with:
           name: build-artifacts
-      - run: npm test
+      - run: npm test -- ${{ env.TEST_ARGS }}
+        env:
+          TEST_ARGS: "--template=foo test"
 
   versioning:
     needs: test

@@ -18,26 +18,9 @@ jobs:
         id: timestamp
         run: echo "time=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
 
-  install:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-      - uses: actions/setup-node@main
-        with:
-          node-version: "20.x"
-          registry-url: "https://registry.npmjs.org"
-      - run: |
-          unset CI
-          npm install
-      - uses: actions/upload-artifact@main
-        with:
-          name: node_modules
-          path: node_modules
-
   versioning:
     needs:
       - setup
-      - install
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.set_version.outputs.version }}
@@ -57,57 +40,60 @@ jobs:
           NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.${{ needs.setup.outputs.timestamp }}"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
           npm --no-git-tag-version version $NEW_VERSION
+      - uses: actions/upload-artifact@main
+        with:
+          name: package
+          path: package.json
 
   build:
     needs:
       - versioning
       - setup
-      - install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
       - uses: actions/download-artifact@main
         with:
-          name: node_modules
+          name: package
+      - uses: ./.github/actions/setup/action.yml
       - run: npm run build
+      - run: ls -la
+      - run: ls -la dist
       - uses: actions/upload-artifact@main
         with:
           name: dist
           path: dist
 
-  test_ts:
-    needs: install
+  test:
+    strategy:
+      matrix:
+        command:
+          - npm run test:js
+          - npm run test:ts
+        template:
+          - foo
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
-      - run: |
-          unset CI
-          npm install
-      - run: npm run test:ts -- ${{ env.TEST_ARGS }}
+      - uses: actions/download-artifact@main
+        with:
+          name: dist
+      - run: ${{ matrix.command }} -- ${{ env.TEST_ARGS }}
         env:
-          TEST_ARGS: "--template=foo test"
+          TEST_ARGS: "--template=${{ matrix.template }} ${{ matrix.template }}"
       - run: ls -la
 
-  test_js:
-    needs: build
+  publish:
+    needs:
+      - test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
       - uses: actions/download-artifact@main
         with:
           name: dist
-      - run: npm test -- ${{ env.TEST_ARGS }}
-        env:
-          TEST_ARGS: "--template=foo test"
-      - run: ls -la
-
-  publish:
-    needs:
-      - test_js
-      - test_ts
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
+      - uses: actions/download-artifact@main
+        with:
+          name: package
       - name: Publish to npm
         run: npm publish --tag=${{ github.ref_name }}
         env:

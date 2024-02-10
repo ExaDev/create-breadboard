@@ -20,7 +20,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - name: Generate timestamp
         id: timestamp
-        run: echo "::set-output name=time::$(date +%Y%m%d%H%M%S)"
+        run: echo "time=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
 
   build:
     needs: setup
@@ -69,7 +69,7 @@ jobs:
         id: set_version
         run: |
           NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.${{ needs.setup.outputs.timestamp }}"
-          echo "::set-output name=version::$NEW_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
           npm --no-git-tag-version version $NEW_VERSION
 
   publish:

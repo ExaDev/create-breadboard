@@ -71,6 +71,7 @@ jobs:
           - npm run test:ts
         template:
           - vite-vue-ts
+          - vite-svelte-ts
     needs: build
     runs-on: ubuntu-latest
     steps:

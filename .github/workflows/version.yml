@@ -51,4 +51,4 @@ jobs:
           draft: true
           prerelease: false
           files: |
-            ./*
+            ./**/*

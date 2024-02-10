@@ -73,7 +73,7 @@ jobs:
           - npm run test:js
           - npm run test:ts
         template:
-          - foo
+          - vite-vue-ts
     needs: build
     runs-on: ubuntu-latest
     steps:

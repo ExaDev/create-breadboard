@@ -7,43 +7,55 @@ on:
       - main
       - develop
 
+
 jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
       timestamp: ${{ steps.timestamp.outputs.time }}
     steps:
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "time=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+
+  install:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@main
       - uses: actions/setup-node@main
         with:
           node-version: "20.x"
           registry-url: "https://registry.npmjs.org"
-      - name: Generate timestamp
-        id: timestamp
-        run: echo "time=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
-
-  build:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
       - run: |
           unset CI
           npm install
-      - run: npm run build
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@main
+      - uses: actions/upload-artifact@main
         with:
-          name: build-artifacts
-          path: |
-            node_modules
-            dist
+          name: node_modules
+          path: node_modules
+
+  build:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@main
+        with:
+          name: node_modules
+      - run: npm run build
+      - uses: actions/upload-artifact@main
+        with:
+          name: dist
+          path: dist
 
   test-ts:
-    needs: build
+    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
+      - uses: actions/download-artifact@main
+        with:
+          name: node_modules
       - run: npm run test:ts -- ${{ env.TEST_ARGS }}
         env:
           TEST_ARGS: "--template=foo test"
@@ -54,10 +66,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
-      - name: Download build artifacts
-        uses: actions/download-artifact@main
+      - uses: actions/download-artifact@main
         with:
-          name: build-artifacts
+          name: dist
       - run: npm test -- ${{ env.TEST_ARGS }}
         env:
           TEST_ARGS: "--template=foo test"

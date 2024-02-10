@@ -31,6 +31,11 @@
 	"license": "ISC",
 	"main": "./dist/index.cjs",
 	"name": "create-breadboard",
+	"registry": "https://registry.npmjs.org/",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ExaDev-io/create-breadboard"
+	},
 	"scripts": {
 		"build": "unbuild && chmod +x ./dist/*",
 		"dev": "unbuild --stub",

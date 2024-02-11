@@ -85,6 +85,8 @@ jobs:
       - setup
       - version
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@main
       - uses: ./.github/actions/setup
@@ -92,6 +94,7 @@ jobs:
           regular-install: true
       - uses: actions/download-artifact@main
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ needs.setup.outputs.workflow_run_trigger_id }}
           name: dist
           path: dist

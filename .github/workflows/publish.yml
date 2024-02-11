@@ -2,10 +2,6 @@ name: Publish Package to NPMjs
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - develop
   release:
     types:
       - published

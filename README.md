@@ -1,5 +1,7 @@
 # create-[breadboard](https://github.com/breadboard-ai/breadboard)
 
+[![npm version](https://badge.fury.io/js/create-breadboard.svg)](https://badge.fury.io/js/create-breadboard)
+
 Scaffold an applicating that uses [breadboard](https://github.com/breadboard-ai/breadboard)
 
 ```bash

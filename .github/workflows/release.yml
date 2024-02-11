@@ -187,6 +187,6 @@ jobs:
           generate_release_notes: ${{ github.event.inputs.release-notes == 'generate_release_notes' }}
           body: |
             ${{ github.event.inputs.release-notes != 'generate_release_notes' && github.event.inputs.release-notes }}
-          files: ./
-            !node_modules/
+          files: |
+            ./
 

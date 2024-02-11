@@ -1,4 +1,4 @@
-name: Create release
+name: Update version
 
 on:
   workflow_dispatch:
@@ -150,6 +150,7 @@ jobs:
         with:
           name: dist
           path: dist
+
       - name: Get triggering user
         id: get_username
         run: echo USERNAME=$(echo ${{ github.actor }}) >> $GITHUB_OUTPUT
@@ -159,6 +160,11 @@ jobs:
         run: |
           echo EMAIL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ github.actor }} | jq -r '.email') >> $GITHUB_OUTPUT
 
+      - id: get_user_id
+        name: Look up email from username
+        run: |
+          echo ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ github.actor }} | jq -r '.id') >> $GITHUB_OUTPUT
+
       - id: get_user_name
         name: Look up name from username
         run: |
@@ -166,8 +172,20 @@ jobs:
 
       - name: Configure git
         run: |
-          git config user.email "${{ steps.get_email.outputs.EMAIL }}"
-          git config user.name "${{ steps.get_user_name.outputs.NAME || github.actor }}"
+          # git config user.email "${{ steps.get_email.outputs.EMAIL }}"
+          if [ -z "${{ steps.get_email.outputs.EMAIL }}" ]; then
+            # ID+USERNAME@users.noreply.github.com
+            EMAIL="${{ steps.get_user_id.outputs.ID }}+${{ steps.get_username.outputs.USERNAME }}@users.noreply.github.com"
+            git config user.email "${EMAIL}"
+          else
+            git config user.email "${{ steps.get_email.outputs.EMAIL }}"
+          fi
+
+          if [ -z "${{ steps.get_user_name.outputs.NAME }}" ]; then
+            git config user.name "${{ steps.get_username.outputs.USERNAME }}"
+          else
+            git config user.name "${{ steps.get_user_name.outputs.NAME }}"
+          fi
 
       - name: Commit updated package version
         run: |
@@ -190,3 +208,28 @@ jobs:
           files: |
             ./
 
+  publish:
+    if: github.event.inputs.draft == false && github.event.inputs.prerelease == false
+    needs:
+      - release
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Download dist
+        uses: actions/download-artifact@main
+        with:
+          name: dist
+          path: dist
+
+      - name: Download package.json
+        uses: actions/download-artifact@main
+        with:
+          name: package_json
+
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

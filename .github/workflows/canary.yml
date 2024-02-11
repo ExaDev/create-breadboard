@@ -22,7 +22,7 @@ jobs:
       hour: ${{ steps.hour.outputs.hour }}
       minute: ${{ steps.minute.outputs.minute }}
       second: ${{ steps.second.outputs.second }}
-      date_string: ${{ steps.timestamp.outputs.year }}.${{ steps.timestamp.outputs.month }}.${{ steps.timestamp.outputs.day }}-${{ steps.timestamp.outputs.hour }}.${{ steps.timestamp.outputs.minute }}.${{ steps.timestamp.outputs.second }}
+      date_string: ${{ steps.timestamp.outputs.year }}_${{ steps.timestamp.outputs.month }}_${{ steps.timestamp.outputs.day }}-${{ steps.timestamp.outputs.hour }}${{ steps.timestamp.outputs.minute }}${{ steps.timestamp.outputs.second }}
       workflow_run_trigger_id: ${{ steps.workflow_run_trigger_id.outputs.WORKFLOW_RUN_ID }}
     steps:
       - name: Generate timestamp
@@ -64,13 +64,15 @@ jobs:
           PATCH_VERSION=$((VERSION_PARTS[2] + 1))
           INCREMENTED_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
           echo "INCREMENTED_VERSION=$INCREMENTED_VERSION" >> $GITHUB_ENV
-
+      - name: Make new version number
+        id: make_version
+        run: |
+          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.${{ needs.setup.outputs.date_string }}-${{ steps.short_sha.outputs.SHORT_SHA }}"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
       - name: Set pre-release version
         id: set_version
         run: |
-          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.${{ needs.setup.outputs.date_string }}.${{ steps.short_sha.outputs.SHORT_SHA }}"
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
-          npm --no-git-tag-version version $NEW_VERSION
+          npm --no-git-tag-version version ${{ steps.make_version.outputs.NEW_VERSION }}
 
       - uses: actions/upload-artifact@main
         with:

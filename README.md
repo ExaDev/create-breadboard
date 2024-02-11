@@ -75,3 +75,11 @@ Derived from [create-vite/svelte-ts](https://github.com/vitejs/vite/tree/main/pa
 ```bash
 npm create breadboard --template vite-svelte-ts
 ```
+
+#### Vite + Lit + TypeScript
+
+Derived from [create-vite/lit-ts](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-svelte-ts)
+
+```bash
+npm create breadboard --template vite-lit-ts
+```

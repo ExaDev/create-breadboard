@@ -51,7 +51,9 @@ jobs:
       new_version: ${{ steps.set_version.outputs.version }}
     steps:
       - uses: actions/checkout@main
-      - run: echo "SHORT_SHA=$("${{ github.sha }}".SubString(0, 8))" >> GITHUB_ENV
+      - name: Get short SHA
+        id: short_sha
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Increment version
         id: increment_version
@@ -66,7 +68,7 @@ jobs:
       - name: Set pre-release version
         id: set_version
         run: |
-          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.${{ env.SHORT_SHA }}.${{ needs.setup.outputs.date_string }}"
+          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.${{ needs.setup.outputs.date_string }}.${{ steps.short_sha.outputs.SHORT_SHA }}"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
           npm --no-git-tag-version version $NEW_VERSION
 

@@ -1,0 +1,123 @@
+name: Publish canary
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Test
+    branches:
+      - main
+      - develop
+    types:
+      - completed
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.timestamp.outputs.time }}
+      year: ${{ steps.year.outputs.year }}
+      month: ${{ steps.month.outputs.month }}
+      day: ${{ steps.day.outputs.day }}
+      hour: ${{ steps.hour.outputs.hour }}
+      minute: ${{ steps.minute.outputs.minute }}
+      second: ${{ steps.second.outputs.second }}
+      date_string: ${{ steps.timestamp.outputs.year }}_${{ steps.timestamp.outputs.month }}_${{ steps.timestamp.outputs.day }}-${{ steps.timestamp.outputs.hour }}${{ steps.timestamp.outputs.minute }}${{ steps.timestamp.outputs.second }}
+      workflow_run_trigger_id: ${{ steps.workflow_run_trigger_id.outputs.WORKFLOW_RUN_ID }}
+    steps:
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "time=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+      - id: year
+        run: echo "year=$(date +%Y)" >> $GITHUB_OUTPUT
+      - id: month
+        run: echo "month=$(date +%m)" >> $GITHUB_OUTPUT
+      - id: day
+        run: echo "day=$(date +%d)" >> $GITHUB_OUTPUT
+      - id: hour
+        run: echo "hour=$(date +%H)" >> $GITHUB_OUTPUT
+      - id: minute
+        run: echo "minute=$(date +%M)" >> $GITHUB_OUTPUT
+      - id: second
+        run: echo "second=$(date +%S)" >> $GITHUB_OUTPUT
+      - id: workflow_run_trigger_id
+        run: echo "WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+
+  version:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.set_version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Get short SHA
+        id: short_sha
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Increment version
+        id: increment_version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          PATCH_VERSION=$((VERSION_PARTS[2] + 1))
+          INCREMENTED_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
+          echo "INCREMENTED_VERSION=$INCREMENTED_VERSION" >> $GITHUB_ENV
+
+      - name: Make new version number
+        id: make_version
+        run: |
+          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}-${{ needs.setup.outputs.timestamp }}-${{ steps.short_sha.outputs.SHORT_SHA }}"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "$NEW_VERSION"
+
+      - name: Set pre-release version
+        id: set_version
+        run: |
+          npm --no-git-tag-version version ${{ steps.make_version.outputs.NEW_VERSION }}
+
+      - name: Upload package.json
+        uses: actions/upload-artifact@main
+        with:
+          name: package_json
+          path: package.json
+
+  publish:
+    needs:
+      - setup
+      - version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          regular-install: true
+
+      - name: Download build
+        uses: actions/download-artifact@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ needs.setup.outputs.workflow_run_trigger_id }}
+          name: dist
+          path: dist
+
+      - name: Download package.json
+        uses: actions/download-artifact@main
+        with:
+          name: package_json
+
+      - name: Set dist tag to branch name
+        run: echo DIST_TAG=${{ github.ref_name }} >> $GITHUB_ENV
+
+      - name: Publish to NPM
+        run: npm publish --tag=${{ env.DIST_TAG }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

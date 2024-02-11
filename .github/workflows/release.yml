@@ -1,0 +1,244 @@
+name: Update version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version-bump:
+        description: |
+          The type of version bump to perform.
+          This value will be ignored if the version input is not "current".
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
+        default: patch
+        required: false
+      version:
+        required: true
+        description: |
+          The version to set the package to.
+          This value must be either "current" or a valid semver version e.g. 1.2.3 or 1.2.3-beta.4.
+          If the value is "current", the version will be incremented based on the version-bump input.
+        type: string
+        default: "current"
+      draft:
+        required: false
+        description: Draft
+        type: boolean
+        default: true
+      prerelease:
+        required: false
+        description: Pre-release
+        type: boolean
+        default: false
+      release-notes:
+        required: false
+        description: Release notes
+        type: string
+        default: "generate_release_notes"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # - if: .ref_protected == true
+      - name: Check if default branch
+        if: github.ref_name != github.event.repository.default_branch
+        uses: actions/github-script@main
+        with:
+          script: |
+            core.setFailed('This action can only be run on the default branch, which is ${{ github.event.repository.default_branch }}')
+
+  setup:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          regular-install: true
+
+  version:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          regular-install: true
+
+      - name: Validate version input
+        uses: actions/github-script@main
+        with:
+          script: |
+            const version = "${{ github.event.inputs.version }}"
+            if (version !== 'current' && !version.match(/^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?/)) {
+              core.setFailed(`Invalid version input: ${version}`)
+            }
+
+      - name: Get current package version
+        id: old_version
+        run: echo OLD_VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
+
+      - name: Update package version
+        run: npm version ${{ github.event.inputs.version-bump }} --no-git-tag-version
+
+      - name: Get updated package version
+        id: new_version
+        run: echo NEW_VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
+
+      - name: Upload package.json
+        uses: actions/upload-artifact@main
+        with:
+          name: package_json
+          path: package.json
+
+    outputs:
+      old_version: ${{ steps.old_version.outputs.OLD_VERSION }}
+      new_version: ${{ steps.new_version.outputs.NEW_VERSION }}
+
+  build:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          regular-install: true
+      - name: Download package.json
+        uses: actions/download-artifact@main
+        with:
+          name: package_json
+      - name: Build
+        run: npm run build
+      - name: Upload dist
+        uses: actions/upload-artifact@main
+        with:
+          name: dist
+          path: dist
+
+  release:
+    needs:
+      - check
+      - version
+      - setup
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - uses: actions/download-artifact@main
+        with:
+          name: package_json
+
+      - uses: actions/download-artifact@main
+        with:
+          name: dist
+          path: dist
+
+      - name: Get triggering user
+        id: get_username
+        run: echo USERNAME=$(echo ${{ github.actor }}) >> $GITHUB_OUTPUT
+
+      - id: get_email
+        name: Look up email from username
+        run: |
+          echo EMAIL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ github.actor }} | jq -r '.email')
+          # if EMAIL is "null" the user has not set an email address
+          if [ "${{ steps.get_email.outputs.EMAIL }}" == "null" ]; then
+            echo EMAIL=""
+          fi
+          echo EMAIL="$EMAIL" >> $GITHUB_OUTPUT
+
+      - id: get_user_id
+        name: Look up email from username
+        run: |
+          echo ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ github.actor }} | jq -r '.id') >> $GITHUB_OUTPUT
+
+      - id: get_user_name
+        name: Look up name from username
+        run: |
+          echo NAME=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ github.actor }} | jq -r '.name') >> $GITHUB_OUTPUT
+
+      - name: Configure git
+        run: |
+          if [ -z "${{ steps.get_email.outputs.EMAIL }}" ]; then
+            # ID+USERNAME@users.noreply.github.com
+            EMAIL="${{ steps.get_user_id.outputs.ID }}+${{ steps.get_username.outputs.USERNAME }}@users.noreply.github.com"
+            git config user.email "${EMAIL}"
+          else
+            git config user.email "${{ steps.get_email.outputs.EMAIL }}"
+          fi
+
+          if [ -z "${{ steps.get_user_name.outputs.NAME }}" ]; then
+            git config user.name "${{ steps.get_username.outputs.USERNAME }}"
+          else
+            git config user.name "${{ steps.get_user_name.outputs.NAME }}"
+          fi
+
+      - name: Commit updated package version
+        run: |
+          git commit -am "v${{ needs.version.outputs.new_version }}"
+          git push
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.version.outputs.new_version }}
+          name: v${{ needs.version.outputs.new_version }}
+          draft: ${{ github.event.inputs.draft }}
+          prerelease: ${{ github.event.inputs.prerelease }}
+          generate_release_notes: ${{ github.event.inputs.release-notes == 'generate_release_notes' }}
+          body: |
+            ${{ github.event.inputs.release-notes != 'generate_release_notes' && github.event.inputs.release-notes }}
+          files: |
+            ./
+
+  publish:
+    if: ${{ github.event.inputs.draft == 'false' && github.event.inputs.prerelease == 'false' }}
+    needs:
+      - release
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Download package.json
+        uses: actions/download-artifact@main
+        with:
+          name: package_json
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          regular-install: true
+
+      - name: Download dist
+        uses: actions/download-artifact@main
+        with:
+          name: dist
+          path: dist
+
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

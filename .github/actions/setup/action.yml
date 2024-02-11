@@ -21,17 +21,18 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@main
     - uses: actions/setup-node@main
       with:
         node-version: ${{ inputs.node-version }}
         registry-url: ${{ inputs.registry-url }}
+
     - if: ${{ inputs.regular-install == 'true' }}
       shell: bash
       run: |
         unset CI
         npm install
         export CI=true
+
     - if: ${{ inputs.regular-install != 'true' }}
       shell: bash
       run: npm ci

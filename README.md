@@ -4,17 +4,53 @@
 
 Scaffold an applicating that uses [breadboard](https://github.com/breadboard-ai/breadboard)
 
+## Commands
+
+### npm 7+
+
+extra double-dash is needed
+
 ```bash
-npm create breadboard [--template <template>] <directory>
+npm create breadboard -- [--template <template>] <directory>
+```
+
+### yarn
+
+```bash
+yarn create breadboard [--template <template>] <directory>
+```
+
+### pnpm
+
+```bash
+pnpm create breadboard [--template <template>] <directory>
+```
+
+### bun
+
+```bash
+bun create breadboard [--template <template>] <directory>
 ```
 
 This `create` package is inspired by and uses several of the Vite project [scaffolding](https://vitejs.dev/guide/#scaffolding-your-first-vite-project) templates.
 
-## Aliases
+### Aliases
+
+#### npm init
 
 ```bash
 npm init breadboard
+```
+
+#### npx
+
+```bash
 npx create-breadboard
+```
+
+#### npm exec
+
+```bash
 npm exec create-breadboard
 ```
 

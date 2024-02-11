@@ -1,136 +1,37 @@
-name: Publish Package to npmjs
+name: Publish Package to NPMjs
 
 on:
   workflow_dispatch:
   push:
-    tags-ignore:
-      - "*"
-  pull_request:
+    branches:
+      - main
+      - develop
   release:
     types:
       - published
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    outputs:
-      timestamp: ${{ steps.timestamp.outputs.time }}
-    steps:
-      - name: Generate timestamp
-        id: timestamp
-        run: echo "time=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
-
-  versioning:
-    needs:
-      - setup
-    runs-on: ubuntu-latest
-    outputs:
-      new_version: ${{ steps.set_version.outputs.version }}
-    steps:
-      - uses: actions/checkout@main
-      - name: Increment version
-        id: increment_version
-        run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
-          PATCH_VERSION=$((VERSION_PARTS[2] + 1))
-          INCREMENTED_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
-          echo "INCREMENTED_VERSION=$INCREMENTED_VERSION" >> $GITHUB_ENV
-      - name: Set pre-release version
-        id: set_version
-        if: github.event_name != 'pull_request' && github.event_name != 'release'
-        run: |
-          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.${{ needs.setup.outputs.timestamp }}"
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
-          npm --no-git-tag-version version $NEW_VERSION
-      - uses: actions/upload-artifact@main
-        with:
-          name: package
-          path: package.json
-
-  build:
-    needs:
-      - versioning
-      - setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-      - uses: actions/download-artifact@main
-        with:
-          name: package
-      - uses: ./.github/actions/setup
-        with:
-          regular-install: true
-      - run: npm run build
-      - run: ls -la
-      - run: ls -la dist
-      - uses: actions/upload-artifact@main
-        with:
-          name: dist
-          path: dist
-
-  test:
-    strategy:
-      matrix:
-        command:
-          - npm run test:js
-          - npm run test:ts
-        template:
-          - vite-vue-ts
-          - vite-svelte-ts
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-      - uses: ./.github/actions/setup
-        with:
-          regular-install: true
-      - uses: actions/download-artifact@main
-        with:
-          name: dist
-          path: dist
-      - run: |
-          if [ -d ${{ matrix.template }} ]; then
-            echo "Directory with name of the template exists"
-            exit 1
-          fi
-      - run: |
-          ls -al
-          ls -al dist || true
-          ${{ matrix.command }} -- ${{ env.TEST_ARGS }}
-        env:
-          TEST_ARGS: "--template=${{ matrix.template }} ${{ matrix.template }}"
-      - run: ls -la ${{ matrix.template }}
-      - run: |
-          if [ -d ${{ matrix.template }} ]; then
-            echo "Directory with name of the template exists"
-          else
-            echo "Directory with name of the template does not exist"
-            exit 1
-          fi
-
   publish:
-    needs:
-      - build
-      - test
     runs-on: ubuntu-latest
-    if : ${{ github.ref_name == 'main' || github.ref_name == 'develop' || ( github.event_name == 'release' && github.event.action == 'published' ) }}
     steps:
       - uses: actions/checkout@main
       - uses: ./.github/actions/setup
         with:
           regular-install: true
-      - uses: actions/download-artifact@main
+      - name: Get release run id
+        id: release_run_id
+        run: echo RELEASE_RUN_ID=${{ github.event.release.id }} >> $GITHUB_OUTPUT
+      - uses: ./.github/actions/download-artifact
         with:
-          name: dist
+          artifact: dist
           path: dist
-      - uses: actions/download-artifact@main
+          run-id: ${{ steps.release_run_id.outputs.RELEASE_RUN_ID }}
+      - uses: ./.github/actions/download-artifact
         with:
-          name: package
-      - run: echo DIST_TAG=${{ github.ref_name }} >> $GITHUB_ENV
-      - if: github.event_name == 'release' && github.event.action == 'published'
-        run: echo DIST_TAG=latest >> $GITHUB_ENV
+          artifact: package_json
+          run-id: ${{ steps.release_run_id.outputs.RELEASE_RUN_ID }}
+
       - name: Publish to npm
-        run: npm publish --tag=$DIST_TAG
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

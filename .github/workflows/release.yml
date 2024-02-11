@@ -1,0 +1,85 @@
+name: Create a Release with Version Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      version-bump:
+        description: |
+          The type of version bump to perform.
+          This value will be ignored if the version input is not "current".
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
+        default: patch
+        required: false
+      version:
+        required: true
+        description: |
+          The version to set the package to.
+          This value must be either "current" or a valid semver version e.g. 1.2.3 or 1.2.3-beta.4.
+          If the value is "current", the version will be incremented based on the version-bump input.
+        type: string
+        default: "current"
+
+jobs:
+  update_version_and_create_release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # - if: github.ref_protected == true
+      - if: github.ref_name != github.event.repository.default_branch
+        uses: actions/github-script@main
+        with:
+          script: |
+            core.setFailed('This action can only be run on the default branch, which is ${{ github.event.repository.default_branch }}')
+
+      - uses: actions/checkout@main
+      - uses: ./.github/actions/setup
+        with:
+          regular-install: true
+
+      - name: Validate version input
+        uses: actions/github-script@main
+        with:
+          script: |
+            const version = "${{ github.event.inputs.version }}"
+            if (version !== 'current' && !version.match(/^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?/)) {
+              core.setFailed(`Invalid version input: ${version}`)
+            }
+
+      - name: Get current package version
+        run: echo VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
+
+      - name: Update package version
+        run: npm version ${{ github.event.inputs.version-bump }} --no-git-tag-version
+
+      - name: Get updated package version
+        run: echo VERSION=$(node -p "require('./package.json').version") >> $GITHUB_ENV
+
+      - name: Commit updated package version
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git commit -am "v$VERSION"
+          git push
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: v${{ env.VERSION }}
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          files:
+            ./

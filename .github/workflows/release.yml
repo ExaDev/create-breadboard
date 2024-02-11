@@ -150,11 +150,27 @@ jobs:
         with:
           name: dist
           path: dist
+      - name: Get triggering user
+        id: get_username
+        run: echo USERNAME=$(echo ${{ github.actor }}) >> $GITHUB_OUTPUT
+
+      - id: get_email
+        name: Look up email from username
+        run: |
+          echo EMAIL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ needs.get_username.outputs.USERNAME }} | jq -r .email) >> $GITHUB_OUTPUT
+
+      - id: get_user_name
+        name: Look up name from username
+        run: |
+          echo NAME=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ needs.get_username.outputs.USERNAME }} | jq -r .name) >> $GITHUB_OUTPUT
+
+      - name: Configure git
+        run: |
+          git config user.email "${{ steps.get_email.outputs.EMAIL }}"
+          git config user.name "${{ steps.get_username.outputs.NAME || steps.get_username.outputs.USERNAME }}"
 
       - name: Commit updated package version
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
           git commit -am "v${{ needs.version.outputs.new_version }}"
           git push
 

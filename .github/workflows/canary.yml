@@ -50,7 +50,9 @@ jobs:
     outputs:
       new_version: ${{ steps.set_version.outputs.version }}
     steps:
-      - uses: actions/checkout@main
+      - name: Checkout
+        uses: actions/checkout@main
+
       - name: Get short SHA
         id: short_sha
         run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -64,18 +66,21 @@ jobs:
           PATCH_VERSION=$((VERSION_PARTS[2] + 1))
           INCREMENTED_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
           echo "INCREMENTED_VERSION=$INCREMENTED_VERSION" >> $GITHUB_ENV
+
       - name: Make new version number
         id: make_version
         run: |
           NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}-${{ needs.setup.outputs.timestamp }}-${{ steps.short_sha.outputs.SHORT_SHA }}"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "$NEW_VERSION"
+
       - name: Set pre-release version
         id: set_version
         run: |
           npm --no-git-tag-version version ${{ steps.make_version.outputs.NEW_VERSION }}
 
-      - uses: actions/upload-artifact@main
+      - name: Upload package.json
+        uses: actions/upload-artifact@main
         with:
           name: package_json
           path: package.json
@@ -88,21 +93,31 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@main
-      - uses: ./.github/actions/setup
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Setup
+        uses: ./.github/actions/setup
         with:
           regular-install: true
-      - uses: actions/download-artifact@main
+
+      - name: Download build
+        uses: actions/download-artifact@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ needs.setup.outputs.workflow_run_trigger_id }}
           name: dist
           path: dist
-      - uses: actions/download-artifact@main
+
+      - name: Download package.json
+        uses: actions/download-artifact@main
         with:
           name: package_json
-      - run: echo DIST_TAG=${{ github.ref_name }} >> $GITHUB_ENV
-      - name: Publish to npm
-        run: npm publish --tag=$DIST_TAG
+
+      - name: Set dist tag to branch name
+        run: echo DIST_TAG=${{ github.ref_name }} >> $GITHUB_ENV
+
+      - name: Publish to NPM
+        run: npm publish --tag=${{ env.DIST_TAG }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

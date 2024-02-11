@@ -1,20 +1,20 @@
-name: 'Download Artifact'
-description: 'Downloads an artifact from a workflow run'
+name: "Download Artifact"
+description: "Downloads an artifact from a workflow run"
 inputs:
   artifact:
-    description: 'Name of the artifact to download'
+    description: "Name of the artifact to download"
     required: true
   path:
-    description: 'Path where to save the artifact'
+    description: "Path where to save the artifact"
     required: true
-    default: '.'
+    default: "."
   run-id:
-    description: 'Workflow run ID to download artifact from'
+    description: "Workflow run ID to download artifact from"
     required: false
-    default: ''
+    default: ""
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Checkout
       uses: actions/checkout@main

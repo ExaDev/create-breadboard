@@ -47,7 +47,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # - if: .ref_protected == true
-      - if: github.ref_name != github.event.repository.default_branch
+      - name: Check if default branch
+        if: github.ref_name != github.event.repository.default_branch
         uses: actions/github-script@main
         with:
           script: |
@@ -57,8 +58,10 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
-      - uses: ./.github/actions/setup
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Setup
+        uses: ./.github/actions/setup
         with:
           regular-install: true
 
@@ -66,10 +69,14 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
-      - uses: ./.github/actions/setup
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Setup
+        uses: ./.github/actions/setup
         with:
           regular-install: true
+
       - name: Validate version input
         uses: actions/github-script@main
         with:
@@ -90,10 +97,12 @@ jobs:
         id: new_version
         run: echo NEW_VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
 
-      - uses: actions/upload-artifact@main
+      - name: Upload package.json
+        uses: actions/upload-artifact@main
         with:
           name: package_json
           path: package.json
+
     outputs:
       old_version: ${{ steps.old_version.outputs.OLD_VERSION }}
       new_version: ${{ steps.new_version.outputs.NEW_VERSION }}
@@ -102,14 +111,20 @@ jobs:
     needs: version
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/setup
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Setup
+        uses: ./.github/actions/setup
         with:
           regular-install: true
-      - uses: actions/download-artifact@main
+      - name: Download package.json
+        uses: actions/download-artifact@main
         with:
           name: package_json
-      - run: npm run build
-      - uses: actions/upload-artifact@main
+      - name: Build
+        run: npm run build
+      - name: Upload dist
+        uses: actions/upload-artifact@main
         with:
           name: dist
           path: dist
@@ -127,16 +142,17 @@ jobs:
       - uses: actions/download-artifact@main
         with:
           name: package_json
+
       - uses: actions/download-artifact@main
         with:
           name: dist
           path: dist
+
       - name: Commit updated package version
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git commit -am "v${{ needs.version.outputs.new_version }}"
-          git push
 
       - name: Create Release
         id: create_release
@@ -151,6 +167,7 @@ jobs:
           generate_release_notes: ${{ github.event.inputs.release-notes == 'generate_release_notes' }}
           body: |
             ${{ github.event.inputs.release-notes != 'generate_release_notes' && github.event.inputs.release-notes }}
-          files:
-            ./
+          files: ./
             !node_modules/
+
+      - run: git push

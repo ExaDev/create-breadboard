@@ -158,7 +158,12 @@ jobs:
       - id: get_email
         name: Look up email from username
         run: |
-          echo EMAIL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ github.actor }} | jq -r '.email') >> $GITHUB_OUTPUT
+          echo EMAIL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ github.actor }} | jq -r '.email')
+          # if EMAIL is "null" the user has not set an email address
+          if [ "${{ steps.get_email.outputs.EMAIL }}" == "null" ]; then
+            echo EMAIL=""
+          fi
+          echo EMAIL="$EMAIL" >> $GITHUB_OUTPUT
 
       - id: get_user_id
         name: Look up email from username
@@ -172,7 +177,6 @@ jobs:
 
       - name: Configure git
         run: |
-          # git config user.email "${{ steps.get_email.outputs.EMAIL }}"
           if [ -z "${{ steps.get_email.outputs.EMAIL }}" ]; then
             # ID+USERNAME@users.noreply.github.com
             EMAIL="${{ steps.get_user_id.outputs.ID }}+${{ steps.get_username.outputs.USERNAME }}@users.noreply.github.com"

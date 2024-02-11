@@ -31,6 +31,7 @@ jobs:
           - vite-svelte-ts
     needs: build
     runs-on: ubuntu-latest
+    permissions: read-all
     steps:
       - uses: actions/checkout@main
       - uses: ./.github/actions/setup

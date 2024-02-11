@@ -8,6 +8,9 @@ on:
 
 jobs:
   publish:
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
@@ -21,6 +24,7 @@ jobs:
         with:
           artifact: dist
           path: dist
+
           run-id: ${{ steps.release_run_id.outputs.RELEASE_RUN_ID }}
       - uses: ./.github/actions/download-artifact
         with:

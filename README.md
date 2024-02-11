@@ -6,7 +6,7 @@ Scaffold an applicating that uses [breadboard](https://github.com/breadboard-ai/
 
 ## Commands
 
-### npm 7+
+### `npm` 7+
 
 extra double-dash is needed
 
@@ -14,41 +14,41 @@ extra double-dash is needed
 npm create breadboard -- [--template <template>] <directory>
 ```
 
-### yarn
+### `yarn`
 
 ```bash
 yarn create breadboard [--template <template>] <directory>
 ```
 
-### pnpm
+### `pnpm`
 
 ```bash
 pnpm create breadboard [--template <template>] <directory>
 ```
 
-### bun
+### `bun`
 
 ```bash
 bun create breadboard [--template <template>] <directory>
 ```
 
-This `create` package is inspired by and uses several of the Vite project [scaffolding](https://vitejs.dev/guide/#scaffolding-your-first-vite-project) templates.
+This `create-` package is inspired by and uses several of the Vite project [scaffolding](https://vitejs.dev/guide/#scaffolding-your-first-vite-project) templates.
 
 ### Aliases
 
-#### npm init
+#### `npm init`
 
 ```bash
 npm init breadboard
 ```
 
-#### npx
+#### `npx`
 
 ```bash
 npx create-breadboard
 ```
 
-#### npm exec
+#### `npm exec`
 
 ```bash
 npm exec create-breadboard
@@ -60,7 +60,7 @@ npm exec create-breadboard
 
 Below is a list of templates derived from Vite's scaffolding [templates](https://vitejs.dev/guide/#scaffolding-your-first-vite-project).
 
-#### Vite + Vue + TypeScript
+#### Vue 3 + TypeScript + Vite + Breadboard
 
 Derived from [create-vite/vue-ts](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-vue-ts)
 
@@ -68,7 +68,7 @@ Derived from [create-vite/vue-ts](https://github.com/vitejs/vite/tree/main/packa
 npm create breadboard --template vite-vue-ts
 ```
 
-#### Vite + Svelte + TypeScript
+#### Svelte + TS + Vite + Breadboard
 
 Derived from [create-vite/svelte-ts](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-svelte-ts)
 

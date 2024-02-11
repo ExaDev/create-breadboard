@@ -167,7 +167,7 @@ jobs:
       - name: Configure git
         run: |
           git config user.email "${{ steps.get_email.outputs.EMAIL }}"
-          git config user.name "${{ steps.get_username.outputs.NAME || steps.get_username.outputs.USERNAME }}"
+          git config user.name "${{ steps.get_user_name.outputs.NAME || github.actor }}"
 
       - name: Commit updated package version
         run: |

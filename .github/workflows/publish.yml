@@ -1,13 +1,11 @@
 name: Publish to npm
 
 on:
-  workflow_dispatch:
   release:
-    types:
-      - published
 
 jobs:
   publish:
+    if : github.event_name == 'release' && github.event.action == 'published'
     permissions: read-all
     runs-on: ubuntu-latest
     steps:

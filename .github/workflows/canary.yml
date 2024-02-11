@@ -67,8 +67,9 @@ jobs:
       - name: Make new version number
         id: make_version
         run: |
-          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}.${{ needs.setup.outputs.date_string }}-${{ steps.short_sha.outputs.SHORT_SHA }}"
+          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}-${{ needs.setup.outputs.timestamp }}-${{ steps.short_sha.outputs.SHORT_SHA }}"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "$NEW_VERSION"
       - name: Set pre-release version
         id: set_version
         run: |

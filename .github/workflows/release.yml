@@ -157,12 +157,12 @@ jobs:
       - id: get_email
         name: Look up email from username
         run: |
-          echo EMAIL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ needs.get_username.outputs.USERNAME }} | jq -r .email) >> $GITHUB_OUTPUT
+          echo EMAIL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ github.actor }} | jq -r '.email') >> $GITHUB_OUTPUT
 
       - id: get_user_name
         name: Look up name from username
         run: |
-          echo NAME=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ needs.get_username.outputs.USERNAME }} | jq -r .name) >> $GITHUB_OUTPUT
+          echo NAME=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ github.actor }} | jq -r '.name') >> $GITHUB_OUTPUT
 
       - name: Configure git
         run: |

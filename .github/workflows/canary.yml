@@ -1,4 +1,4 @@
-name: Publish Canary
+name: Publish canary
 
 on:
   workflow_dispatch:

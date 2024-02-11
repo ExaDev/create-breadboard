@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@main
       - uses: actions/download-artifact@main
         with:
-          name: package
+          name: package_json
       - uses: ./.github/actions/setup
         with:
           regular-install: true

@@ -1,4 +1,4 @@
-name: Create a Release with Version Update
+name: Create release
 
 on:
   workflow_dispatch:

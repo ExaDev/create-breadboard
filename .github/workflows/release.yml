@@ -213,7 +213,7 @@ jobs:
             ./
 
   publish:
-    if: github.event.inputs.draft == 'false' && github.event.inputs.prerelease == 'false'
+    if: ${{ github.event.inputs.draft == 'false' && github.event.inputs.prerelease == 'false' }}
     needs:
       - release
       - build

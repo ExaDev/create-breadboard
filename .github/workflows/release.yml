@@ -28,20 +28,17 @@ on:
         default: "current"
       draft:
         required: false
-        description: |
-          Whether to create the release as a draft.
+        description: Draft
         type: boolean
         default: true
       prerelease:
         required: false
-        description: |
-          Whether to create the release as a prerelease.
+        description: Pre-release
         type: boolean
         default: false
       release-notes:
         required: false
-        description: |
-          The release notes to use for the release.
+        description: Release notes
         type: string
         default: "generate_release_notes"
 

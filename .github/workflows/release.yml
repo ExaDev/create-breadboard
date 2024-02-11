@@ -26,25 +26,53 @@ on:
           If the value is "current", the version will be incremented based on the version-bump input.
         type: string
         default: "current"
+      draft:
+        required: false
+        description: |
+          Whether to create the release as a draft.
+        type: boolean
+        default: true
+      prerelease:
+        required: false
+        description: |
+          Whether to create the release as a prerelease.
+        type: boolean
+        default: false
+      release-notes:
+        required: false
+        description: |
+          The release notes to use for the release.
+        type: string
+        default: "generate_release_notes"
 
 jobs:
-  update_version_and_create_release:
+  check:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      # - if: github.ref_protected == true
+      # - if: .ref_protected == true
       - if: github.ref_name != github.event.repository.default_branch
         uses: actions/github-script@main
         with:
           script: |
             core.setFailed('This action can only be run on the default branch, which is ${{ github.event.repository.default_branch }}')
 
+  setup:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@main
       - uses: ./.github/actions/setup
         with:
           regular-install: true
 
+  version:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: ./.github/actions/setup
+        with:
+          regular-install: true
       - name: Validate version input
         uses: actions/github-script@main
         with:
@@ -55,19 +83,62 @@ jobs:
             }
 
       - name: Get current package version
-        run: echo VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
+        id: old_version
+        run: echo OLD_VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
 
       - name: Update package version
         run: npm version ${{ github.event.inputs.version-bump }} --no-git-tag-version
 
       - name: Get updated package version
-        run: echo VERSION=$(node -p "require('./package.json').version") >> $GITHUB_ENV
+        id: new_version
+        run: echo NEW_VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
 
+      - uses: actions/upload-artifact@main
+        with:
+          name: package_json
+          path: package.json
+    outputs:
+      old_version: ${{ steps.old_version.outputs.OLD_VERSION }}
+      new_version: ${{ steps.new_version.outputs.NEW_VERSION }}
+
+  build:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/setup
+        with:
+          regular-install: true
+      - uses: actions/download-artifact@main
+        with:
+          name: package_json
+      - run: npm run build
+      - uses: actions/upload-artifact@main
+        with:
+          name: dist
+          path: dist
+
+  release:
+    needs:
+      - check
+      - version
+      - setup
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@main
+        with:
+          name: package_json
+      - uses: actions/download-artifact@main
+        with:
+          name: dist
+          path: dist
       - name: Commit updated package version
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git commit -am "v$VERSION"
+          git commit -am "v${{ needs.version.outputs.new_version }}"
           git push
 
       - name: Create Release
@@ -76,10 +147,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ env.VERSION }}
-          name: v${{ env.VERSION }}
-          draft: true
-          prerelease: false
-          generate_release_notes: true
+          tag_name: v${{ needs.version.outputs.new_version }}
+          name: v${{ needs.version.outputs.new_version }}
+          draft: ${{ github.event.inputs.draft }}
+          prerelease: ${{ github.event.inputs.prerelease }}
+          generate_release_notes: ${{ github.event.inputs.release-notes == 'generate_release_notes' }}
+          body: |
+            ${{ github.event.inputs.release-notes != 'generate_release_notes' && github.event.inputs.release-notes }}
           files:
             ./
+            !node_modules/

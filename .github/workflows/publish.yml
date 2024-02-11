@@ -17,15 +17,17 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           regular-install: true
+
       - name: Get release run id
         id: release_run_id
         run: echo RELEASE_RUN_ID=${{ github.event.release.id }} >> $GITHUB_OUTPUT
+
       - uses: ./.github/actions/download-artifact
         with:
           artifact: dist
           path: dist
-
           run-id: ${{ steps.release_run_id.outputs.RELEASE_RUN_ID }}
+
       - uses: ./.github/actions/download-artifact
         with:
           artifact: package_json

@@ -36,6 +36,7 @@ jobs:
           - npm run start:js
           - npm run start:ts
           - npm run start:npx
+          - npx create-breadboard
         template:
           - vite-vue-ts
           - vite-svelte-ts

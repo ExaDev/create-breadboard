@@ -56,6 +56,8 @@
 		"start:js": "wireit",
 		"start:npx": "wireit",
 		"start:ts": "wireit",
+		"test:js": "wireit",
+		"test:npx": "wireit",
 		"test:ts": "wireit",
 		"typecheck": "wireit"
 	},
@@ -93,13 +95,25 @@
 			]
 		},
 		"start:npx": {
-			"command": "npx create-breadboard",
+			"command": "npm create breadboard",
 			"dependencies": [
 				"install:global"
 			]
 		},
 		"start:ts": {
 			"command": "tsx src/index.ts"
+		},
+		"test:js": {
+			"command": "npm run start:js -- --template vite-svelte-ts output",
+			"dependencies": [
+				"build"
+			]
+		},
+		"test:npx": {
+			"command": "npm create breadboard -- --template vite-svelte-ts output",
+			"dependencies": [
+				"install:global"
+			]
 		},
 		"test:ts": {
 			"command": "npm run start:ts -- --template vite-svelte-ts output"

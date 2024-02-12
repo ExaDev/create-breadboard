@@ -14,6 +14,7 @@
 		"@types/inquirer": "^9.0.7",
 		"@types/node": "^20.11.17",
 		"inquirer": "^9.2.14",
+		"tsx": "^4.7.1",
 		"typescript": "^5.3.3",
 		"unbuild": "^2.0.0"
 	},

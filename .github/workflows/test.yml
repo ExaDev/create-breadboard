@@ -29,8 +29,9 @@ jobs:
       fail-fast: false
       matrix:
         command:
-          - npm run test:js
-          - npm run test:ts
+          - npm run start:js
+          - npm run start:ts
+          - npm run start:npx
         template:
           - vite-vue-ts
           - vite-svelte-ts
@@ -56,7 +57,7 @@ jobs:
           ls -al dist || true
           ${{ matrix.command }} -- ${{ env.TEST_ARGS }}
         env:
-          TEST_ARGS: "--template=${{ matrix.template }} ${{ matrix.template }}"
+          TEST_ARGS: "--template ${{ matrix.template }} ${{ matrix.template }}"
       - run: ls -la ${{ matrix.template }}
       - run: |
           if [ -d ${{ matrix.template }} ]; then

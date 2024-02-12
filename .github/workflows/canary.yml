@@ -33,9 +33,9 @@ jobs:
       fail-fast: false
       matrix:
         command:
-          - npm run start:js
-          - npm run start:ts
-          - npm run start:npx
+          - npm run start:js --
+          - npm run start:ts --
+          - npm run start:npx --
           - npm run start:npx --
           - npx create-breadboard
           - npx create-breadboard --

@@ -104,7 +104,7 @@
 			]
 		},
 		"start:js": {
-			"command": "node dist/index.cjs",
+			"command": "node ./dist/index.mjs",
 			"dependencies": [
 				"build"
 			],

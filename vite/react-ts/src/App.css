@@ -38,8 +38,23 @@
 
 .card {
   padding: 2em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1em;
 }
 
 .read-the-docs {
   color: #888;
+}
+
+.userInput {
+	line-height: 1.8em;
+	border-radius: .3em;
+	padding: 1em 1.6em;
+ 	margin: 8px 0;
+  	box-sizing: border-box;
+	border-style: unset;
+	color: #e3e3e3;
+	border: .1em solid#e3e3e3;
 }

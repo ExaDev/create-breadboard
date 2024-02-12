@@ -1,28 +1,9 @@
-import { Board, Schema } from "@google-labs/breadboard";
+import { board } from "@google-labs/breadboard";
 
-const board = new Board({
-  title: "Vite-React-TS",
-});
+const myBoard = board<{ message: string }>(({ message }, { output }) => {
+	const renamedOutput = message.as("output").to(output());
+	return renamedOutput;
+  });
 
-export const inputAttribute = "message";
-
-const input = board.input({
-  $id: "input-message",
-  schema: {
-    type: "object",
-    properties: {
-      message: {
-        type: "string",
-        title: "Input Message",
-        description: "The input message",
-		default: "Hello world"
-      },
-    },
-  } satisfies Schema,
-});
-
-const output = board.output();
-input.wire(inputAttribute, output);
-
-export { board };
-export { board as default };
+export { myBoard };
+export { myBoard as default };

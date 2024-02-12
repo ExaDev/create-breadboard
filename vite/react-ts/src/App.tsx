@@ -2,24 +2,27 @@ import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import breadboardLogo from "../../../assets/breadboard.png";
 import "./App.css";
-import board, { inputAttribute } from "./breadboard";
-import { useState } from "react";
+import { myBoard } from "./breadboard";
+import { useEffect, useState } from "react";
+import React from "react";
 
 function App() {
-  const [message, setMessage] = useState("");
+  const [outputMessage, setOutputMessage] = useState<string | null>(null);
+  const [userMessage, setUserMessage] = useState<string | undefined>(undefined);
+  const userInput = React.createRef<HTMLInputElement>();
+
+  const onChange = (): void => {
+    setUserMessage(userInput.current?.value);
+  };
 
   const displayValue = async () => {
-    for await (const run of board.run()) {
-      if (run.type === "input") {
-        run.inputs = {
-          [inputAttribute]: "Hello from Breadboard",
-        };
-      } else if (run.type === "output") {
-        const output = run.outputs;
-        setMessage(JSON.stringify(output["message"], null));
-      }
-    }
+    const boardRun = await myBoard({ message: userMessage });
+    setOutputMessage(JSON.stringify(boardRun["output"], null));
   };
+
+  useEffect(() => {
+    displayValue();
+  }, [userMessage]);
 
   return (
     <>
@@ -30,7 +33,7 @@ function App() {
         <a href="https://react.dev" target="_blank">
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
-        <a href="https://react.dev" target="_blank">
+        <a href="https://github.com/breadboard-ai/breadboard" target="_blank">
           <img
             src={breadboardLogo}
             className="logo breadboard"
@@ -40,10 +43,17 @@ function App() {
       </div>
       <h1>Vite + React + Breadboard</h1>
       <div className="card">
-        <button onClick={displayValue}>
-          Click here to get a message from Breadboard
-        </button>
-        <p>{message}</p>
+        <label htmlFor="userInput">
+          You may enter a message for Breadboard!
+        </label>
+        <input
+          className="userInput"
+          id="userInput"
+          value={userMessage}
+          onChange={onChange}
+          ref={userInput}
+        />
+        <p>{outputMessage}</p>
       </div>
     </>
   );

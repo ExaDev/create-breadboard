@@ -66,7 +66,15 @@
 	"version": "1.0.17",
 	"wireit": {
 		"build": {
-			"command": "unbuild && chmod +x ./dist/*"
+			"command": "unbuild && chmod +x ./dist/*",
+			"files": [
+				"src/**",
+				"package.json",
+				"tsconfig.json"
+			],
+			"output": [
+				"dist"
+			]
 		},
 		"dev": {
 			"command": "unbuild --stub"
@@ -86,6 +94,12 @@
 		"prepublishOnly": {
 			"dependencies": [
 				"build"
+			],
+			"files": [
+				"package.json",
+				"index.js",
+				"dist/**",
+				"templates/**"
 			]
 		},
 		"start:js": {
@@ -95,10 +109,12 @@
 			]
 		},
 		"start:npx": {
-			"command": "npm create breadboard",
+			"command": "npx create-breadboard",
 			"dependencies": [
+				"build",
 				"install:global"
-			]
+			],
+			"files": []
 		},
 		"start:ts": {
 			"command": "tsx src/index.ts"

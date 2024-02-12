@@ -9,7 +9,8 @@
 	"dependencies": {
 		"@commander-js/extra-typings": "^12.0.0",
 		"commander": "^12.0.0",
-		"fs-extra": "^11.2.0"
+		"fs-extra": "^11.2.0",
+		"inquirer": "^9.2.14"
 	},
 	"description": "",
 	"devDependencies": {
@@ -20,7 +21,6 @@
 		"@types/jsonfile": "^6.1.4",
 		"@types/node": "^20.11.17",
 		"@types/through": "^0.0.33",
-		"inquirer": "^9.2.14",
 		"tsx": "^4.7.1",
 		"typescript": "^5.3.3",
 		"unbuild": "^2.0.0",
@@ -89,7 +89,8 @@
 			"command": "npm i -g .",
 			"dependencies": [
 				"build"
-			]
+			],
+			"output": []
 		},
 		"prepublishOnly": {
 			"dependencies": [
@@ -106,7 +107,11 @@
 			"command": "node dist/index.cjs",
 			"dependencies": [
 				"build"
-			]
+			],
+			"files": [
+				"dist/**"
+			],
+			"output": []
 		},
 		"start:npx": {
 			"command": "npx create-breadboard",

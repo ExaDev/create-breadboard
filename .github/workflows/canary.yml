@@ -36,7 +36,11 @@ jobs:
           - npm run start:js
           - npm run start:ts
           - npm run start:npx
+          - npm run start:npx --
           - npx create-breadboard
+          - npx create-breadboard --
+          - npx .
+          - npx . --
         template:
           - vite-vue-ts
           - vite-svelte-ts
@@ -60,7 +64,7 @@ jobs:
       - run: |
           ls -al
           ls -al dist || true
-          ${{ matrix.command }} -- ${{ env.TEST_ARGS }}
+          ${{ matrix.command }} ${{ env.TEST_ARGS }}
         env:
           TEST_ARGS: "--template ${{ matrix.template }} ${{ matrix.template }}"
       - run: ls -la ${{ matrix.template }}

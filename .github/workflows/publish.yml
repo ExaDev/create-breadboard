@@ -1,0 +1,42 @@
+name: Publish to npm
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  publish:
+    if : github.event_name == 'release' && github.event.action == 'published'
+    permissions: read-all
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          regular-install: true
+
+      - name: Get release run id
+        id: release_run_id
+        run: echo RELEASE_RUN_ID=${{ github.event.release.id }} >> $GITHUB_OUTPUT
+
+      - name: Download dist
+        uses: ./.github/actions/download-artifact
+        with:
+          artifact: dist
+          path: dist
+          run-id: ${{ steps.release_run_id.outputs.RELEASE_RUN_ID }}
+
+      - name: Download package.json
+        uses: ./.github/actions/download-artifact
+        with:
+          artifact: package_json
+          run-id: ${{ steps.release_run_id.outputs.RELEASE_RUN_ID }}
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,0 +1,63 @@
+name: "Download Artifact"
+description: "Downloads an artifact from a workflow run"
+inputs:
+  artifact:
+    description: "Name of the artifact to download"
+    required: true
+  path:
+    description: "Path where to save the artifact"
+    required: true
+    default: "."
+  run-id:
+    description: "Workflow run ID to download artifact from"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Download Artifact
+      uses: actions/github-script@main
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          const artifactName = '${{ inputs.artifact-name }}';
+          const outputPath = path.join('${{ inputs.path }}', artifactName + '.zip');
+          let runId = '${{ inputs.run-id }}';
+
+          if (!runId) {
+            // If run ID is not provided, fetch the latest published release
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            const latestRelease = releases.data[0];
+            if (!latestRelease) {
+              throw new Error('No releases found in the repository');
+            }
+            runId = latestRelease.id;
+          }
+
+          const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: runId,
+          });
+
+          const artifact = artifacts.data.artifacts.find(a => a.name === artifactName);
+          if (!artifact) {
+            throw new Error(`Artifact \`${artifactName}\` not found in run ${runId}`);
+          }
+
+          const download = await github.rest.actions.downloadArtifact({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            artifact_id: artifact.id,
+            archive_format: 'zip',
+          });
+
+          fs.writeFileSync(outputPath, Buffer.from(download.data));

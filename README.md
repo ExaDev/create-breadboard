@@ -54,7 +54,7 @@ npx create-breadboard
 npm exec create-breadboard
 ```
 
-## Supported templates\
+## Supported template
 
 ### Vite based templates
 

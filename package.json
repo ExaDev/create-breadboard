@@ -1,7 +1,10 @@
 {
 	"author": "",
 	"bin": {
-		"create-breadboard": "index.js"
+		"cb": "index.js",
+		"cba": "index.js",
+		"create-breadboard": "index.js",
+		"create-breadboard-app": "index.js"
 	},
 	"dependencies": {
 		"@commander-js/extra-typings": "^12.0.0",

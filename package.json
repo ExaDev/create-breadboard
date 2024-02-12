@@ -42,7 +42,7 @@
 		"dev": "unbuild --stub",
 		"prepublishOnly": "chmod +x ./dist/*",
 		"test:js": "npm i -g . && npx create-breadboard",
-		"test:ts": "npx -y tsx src/index.ts",
+		"test:ts": "tsx src/index.ts",
 		"typecheck": "tsc --noEmit"
 	},
 	"type": "module",

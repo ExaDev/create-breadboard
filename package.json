@@ -131,7 +131,7 @@
 			]
 		},
 		"test:npx": {
-			"command": "npm create breadboard -- --template vite-svelte-ts output",
+			"command": "npx create-breadboard -- --template vite-svelte-ts output",
 			"dependencies": [
 				"install:global"
 			]

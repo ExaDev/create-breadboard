@@ -1,6 +1,6 @@
 #!/usr/bin/env node --harmony --import=tsx
 
-import { Command } from "commander";
+import { Argument, Command, Option } from "@commander-js/extra-typings";
 import fs from "fs-extra";
 import inquirer from "inquirer";
 import path from "path";
@@ -10,7 +10,7 @@ const program = new Command();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const packageRoot = findPackageRoot(__dirname);
-const samplesDir = path.join(packageRoot, "templates");
+const samplesDir = path.resolve(path.join(packageRoot, "templates"));
 
 function useTemplate(template: string, target: string): void {
 	console.log(`template:`, colourText(template, fgColour.green));
@@ -67,10 +67,10 @@ const config: ConfigObject = defineConfig({
 });
 
 function findPackageRoot(directory: string): string {
-	const file = path.join(directory, "package.json");
+	const file = path.resolve(path.join(directory, "package.json"));
 
 	if (fs.existsSync(file)) {
-		return directory;
+		return path.resolve(directory);
 	}
 
 	const parentDirectory = path.dirname(directory);
@@ -91,7 +91,11 @@ const packageJson: {
 const packageVersion = packageJson.version;
 
 function responseValueIsValid(value: any): boolean {
-	return value && typeof value == "string" && value.length > 0;
+	const result = value && typeof value == "string" && value.length > 0;
+	if (!result) {
+		console.error("Invalid value:", value);
+	}
+	return value;
 }
 
 program
@@ -154,13 +158,16 @@ function errorColor(str: string) {
 	return colourText(str, [fgColour.red]);
 }
 
-function isValidPath(path: string): boolean {
+function isValidPath(path: string, printError = false): boolean {
 	// Define invalid characters for Windows and Unix-like systems
 	const invalidCharsWindows = /[<>:"/\\|?*]/;
 	const invalidCharsUnix = /\0/;
 
 	// Check for invalid characters
 	if (invalidCharsWindows.test(path) || invalidCharsUnix.test(path)) {
+		if (printError) {
+			logError("The target path contains invalid characters");
+		}
 		return false;
 	}
 
@@ -191,115 +198,152 @@ function isValidPath(path: string): boolean {
 	];
 	const baseName = path.split(/[\\/]/).pop();
 	if (baseName && reservedNames.includes(baseName.toUpperCase())) {
+		if (printError) {
+			logError("The target path contains reserved filename");
+		}
 		return false;
 	}
 
 	// Check for relative path traversal
 	if (path.includes("../") || path.includes("..\\")) {
+		if (printError) {
+			logError("The target path contains relative path traversal");
+		}
 		return false;
 	}
 
 	// Check path length
 	if (path.length > 260) {
+		if (printError) {
+			logError("The target path is too long");
+		}
 		return false;
 	}
 
 	return true;
 }
 
+function logError(message: string) {
+	console.error("\n", errorColor(message));
+}
+
+function isExistentFile(arg: string, printError = false): boolean {
+	const result = fs.existsSync(arg) && fs.statSync(arg).isFile();
+	if (result && printError) {
+		logError("The target path already exists and is a file");
+	}
+	return result;
+}
+
 program.configureOutput({
-	writeOut: (str) => process.stdout.write(`[OUT] ${str}`),
-	writeErr: (str) => process.stdout.write(`[ERR] ${str}`),
+	// writeOut: (str) => process.stdout.write(str),
+	// writeErr: (str) => process.stdout.write(colourText(str, fgColour.red)),
 	// Highlight errors in color.
 	outputError: (str, write) => write(errorColor(str)),
 });
 
-program
-	.command("create", {
-		isDefault: true,
-	})
-	.option(
-		"--template <type>",
-		"Specify the template type",
-		config.template.default
-	)
-	.argument("[target]", "Specify the target directory", config.directory)
-	.description("The name of the template to use")
-	.action(async (template?: string, target?: string) => {
-		while (!responseValueIsValid(template)) {
-			const response = await inquirer.prompt([
-				{
-					type: "list",
-					name: "template",
-					message: "Please choose a valid template:",
-					choices: config.template.available,
-				},
-			]);
-			template = response.template;
-		}
+const createCommand = new Command<
+	[string],
+	{
+		template?: string;
+		mode?: ModeOption;
+	}
+>("create");
 
-		while (!responseValueIsValid(target)) {
-			const response = await inquirer.prompt([
-				{
-					type: "input",
-					name: "target",
-					message: "Please enter the target directory:",
-					validate(input) {
-						return isValidPath(input);
-					},
-				},
-			]);
-			if (response.target) {
-				const tempTarget: string = response.target;
-				const pathExists = fs.existsSync(tempTarget);
-				const pathIsDirectory =
-					pathExists && fs.statSync(tempTarget).isDirectory();
+const templateOption = new Option(
+	"-t, --template <template>",
+	"Template"
+).choices(getAvailableTemplateNames(samplesDir));
+createCommand.addOption(templateOption);
 
-				if (pathExists && !pathIsDirectory) {
-					console.error(
-						"The target path already exists but is not a directory"
-					);
-					continue;
-				} else if (pathExists && pathIsDirectory) {
-					const files = fs.readdirSync(tempTarget);
-					const fileCount: number = files.length;
-					if (fileCount > 0) {
-						const response = await inquirer.prompt([
-							{
-								type: "confirm",
-								name: "continue",
-								message: `The target directory already contains ${fileCount} files. Do you want to continue?`,
-								default: false,
-							},
-						]);
+const modeOptions = {
+	overwrite: "overwrite",
+	merge: "merge",
+	abort: "abort",
+} as const;
+type ModeOption = keyof typeof modeOptions;
 
-						if (!response.continue) {
-							// If the user doesn't want to continue, then we should prompt for a new target
-							continue;
-						} else {
-							target = tempTarget;
-						}
+const modeOptionsArray = Object.values(modeOptions);
+
+const modeOption = new Option(
+	"-m, --mode <mode>",
+	"How to handle existing files in the target directory"
+)
+	.default(modeOptions.abort)
+	.choices(modeOptionsArray);
+createCommand.addOption(modeOption);
+
+const targetArgument = new Argument("[target]", "Target directory");
+createCommand.addArgument(targetArgument);
+
+createCommand.action(async (arg: string, options) => {
+	while (!responseValueIsValid(options.template)) {
+		const response = await inquirer.prompt([
+			{
+				type: "list",
+				name: "template",
+				message: "Please choose a valid template:",
+				choices: templateOption.argChoices,
+			},
+		]);
+		options.template = response.template;
+	}
+
+	while (
+		!responseValueIsValid(arg) ||
+		!isValidPath(arg, true) ||
+		isExistentFile(arg, true)
+	) {
+		const response = await inquirer.prompt([
+			{
+				type: "input",
+				name: "target",
+				message: "Please enter the target directory:",
+				validate(input) {
+					const validPath = isValidPath(input, true);
+					if (!validPath) {
+						return false;
 					}
-				}
+					const existentFile = isExistentFile(input, true);
+					if (existentFile) {
+						return false;
+					}
+					return true;
+				},
+			},
+		]);
 
-				target = tempTarget;
-			}
+		arg = response.target;
+	}
+
+	if (!options.template || !options.mode || !arg) {
+		throw new Error("Input values are invalid");
+	}
+
+	const directoryExists = fs.existsSync(arg) && fs.statSync(arg).isDirectory();
+
+	if (directoryExists && options.mode === modeOptions.abort) {
+		const files = fs.readdirSync(arg);
+		const fileCount: number = files.length;
+		if (fileCount > 0) {
+			logError(`\nThe target directory contains ${fileCount} files\n`);
+
+			program.help();
 		}
+	}
 
-		if (!template || !target) {
-			throw new Error("Input values are invalid");
-		}
+	useTemplate(options.template, arg);
+});
 
-		useTemplate(template, target);
-	});
+program.addCommand(createCommand, {
+	isDefault: true,
+});
 
 program.showHelpAfterError();
 program.configureHelp({
 	sortSubcommands: true,
-	// subcommandTerm: (cmd) => colourText([
-	// 	cmd.name(),
-	// 	cmd.options
-	// ].join(" "), [fgColour.cyan]),
+	showGlobalOptions: true,
+	sortOptions: true,
 });
 
 program.parse(process.argv);

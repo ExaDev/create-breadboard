@@ -37,14 +37,6 @@ function shellIsInteractive(): boolean {
 	return process.stdin.isTTY;
 }
 
-type ConfigObject = {
-	template: {
-		default?: string;
-		available: string[];
-	};
-	directory?: string;
-};
-
 function getAvailableTemplateNames(directory: string = samplesDir): string[] {
 	const templateDirContents = fs.readdirSync(directory);
 	const templateDirDirs = templateDirContents.filter((name: string) =>
@@ -52,30 +44,6 @@ function getAvailableTemplateNames(directory: string = samplesDir): string[] {
 	);
 	return templateDirDirs.map((name: string) => path.basename(name));
 }
-
-const defaultConfig: Partial<ConfigObject> = {
-	template: {
-		available: getAvailableTemplateNames(),
-	},
-};
-
-function defineConfig(config: ConfigObject): ConfigObject {
-	return {
-		...defaultConfig,
-		...config,
-		template: {
-			...defaultConfig.template,
-			...config.template,
-		},
-	};
-}
-
-const config: ConfigObject = defineConfig({
-	template: {
-		default: "",
-		available: getAvailableTemplateNames(),
-	},
-});
 
 function findPackageRoot(directory: string): string {
 	const file = path.resolve(path.join(directory, "package.json"));

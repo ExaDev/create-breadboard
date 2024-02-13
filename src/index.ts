@@ -69,10 +69,10 @@ const packageJson: {
 );
 const packageVersion = packageJson.version;
 
-function responseValueIsValid(value: any): boolean {
+function responseValueIsValid(value: any, name?: string, print = false): boolean {
 	const result = value && typeof value == "string" && value.length > 0;
-	if (!result) {
-		console.error("Invalid value:", value);
+	if (!result && print) {
+		console.error("Invalid value", print ? name : undefined, value);
 	}
 	return value;
 }
@@ -258,7 +258,8 @@ createCommand.addArgument(targetArgument);
 const helpText = program.helpInformation();
 
 createCommand.action(async (arg: string, options) => {
-	while (!responseValueIsValid(options.template)) {
+	let printTemplateValueError = false;
+	while (!responseValueIsValid(options.template, "template", printTemplateValueError)) {
 		throwIfFunctionNonInteractive();
 		const response = await inquirer.prompt([
 			{
@@ -269,10 +270,12 @@ createCommand.action(async (arg: string, options) => {
 			},
 		]);
 		options.template = response.template;
+		printTemplateValueError = true
 	}
 
+	let printTargetValueError = false;
 	while (
-		!responseValueIsValid(arg) ||
+		!responseValueIsValid(arg, "target", printTargetValueError) ||
 		!isValidPath(arg, true) ||
 		isExistentFile(arg, true)
 	) {
@@ -297,6 +300,7 @@ createCommand.action(async (arg: string, options) => {
 		]);
 
 		arg = response.target;
+		printTargetValueError = true;
 	}
 
 	if (!options.template || !options.mode || !arg) {

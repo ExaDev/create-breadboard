@@ -222,11 +222,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
 
-      - name: Download package.json
-        uses: actions/download-artifact@main
-        with:
-          name: package_json
-
       - name: Setup
         uses: ./.github/actions/setup
         with:
@@ -237,6 +232,11 @@ jobs:
         with:
           name: dist
           path: dist
+
+      - name: Download package.json
+        uses: actions/download-artifact@main
+        with:
+          name: package_json
 
       - name: Publish
         run: npm publish

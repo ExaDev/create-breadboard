@@ -33,14 +33,14 @@ jobs:
       fail-fast: false
       matrix:
         command:
-          - npm run start:js --
-          - npm run start:ts --
-          - npm run start:npx --
-          - npm run start:npx --
-          - npx create-breadboard
+          - node ./dist/index.mjs --
+          - node ./dist/index.mjs
+          - tsx src/index.ts --
+          - tsx src/index.ts
           - npx create-breadboard --
-          - npx .
+          - npx create-breadboard
           - npx . --
+          - npx .
         template:
           - vite-vue-ts
           - vite-svelte-ts
@@ -64,6 +64,9 @@ jobs:
       - run: |
           ls -al
           ls -al dist || true
+          npm install
+          npm install -g tsx
+          npm run install:global
           ${{ matrix.command }} ${{ env.TEST_ARGS }}
         env:
           TEST_ARGS: "--template ${{ matrix.template }} ${{ matrix.template }}"

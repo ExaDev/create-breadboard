@@ -51,6 +51,7 @@
 		"dev": "wireit",
 		"help:js": "wireit",
 		"help:ts": "wireit",
+		"install:global": "wireit",
 		"prepublishOnly": "wireit",
 		"start:js": "wireit",
 		"start:npx": "wireit",
@@ -84,6 +85,13 @@
 		"help:ts": {
 			"command": "npm run start:ts help create"
 		},
+		"install:global": {
+			"command": "npm i -g .",
+			"dependencies": [
+				"build"
+			],
+			"output": []
+		},
 		"prepublishOnly": {
 			"dependencies": [
 				"build"
@@ -102,13 +110,16 @@
 			],
 			"files": [
 				"dist/**"
-			]
+			],
+			"output": []
 		},
 		"start:npx": {
-			"command": "npx .",
+			"command": "npx create-breadboard",
 			"dependencies": [
-				"build"
-			]
+				"build",
+				"install:global"
+			],
+			"files": []
 		},
 		"start:ts": {
 			"command": "tsx src/index.ts"
@@ -120,9 +131,9 @@
 			]
 		},
 		"test:npx": {
-			"command": "npx . --template vite-svelte-ts output",
+			"command": "npx create-breadboard -- --template vite-svelte-ts output",
 			"dependencies": [
-				"build"
+				"install:global"
 			]
 		},
 		"test:ts": {

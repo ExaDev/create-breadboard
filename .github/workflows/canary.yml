@@ -157,7 +157,8 @@ jobs:
       - setup
       - version
     runs-on: ubuntu-latest
-    permissions: read-all
+    permissions:
+      id-token: write
     outputs:
       command: npx create-breadboard@${{ needs.version.outputs.new_version }}
     steps:

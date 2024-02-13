@@ -33,8 +33,8 @@ function throwIfFunctionNonInteractive() {
 	}
 }
 
-function shellIsInteractive() {
-	return process.stdout.isTTY;
+function shellIsInteractive(): boolean {
+	return process.stdin.isTTY;
 }
 
 type ConfigObject = {

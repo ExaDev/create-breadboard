@@ -1,4 +1,4 @@
-#!/usr/bin/env node --harmony --import=tsx
+#!/usr/bin/env node --harmony
 
 import { Argument, Command, Option } from "@commander-js/extra-typings";
 import fs from "fs-extra";

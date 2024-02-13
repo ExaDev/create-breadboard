@@ -29,19 +29,17 @@ jobs:
           path: dist
 
   test:
+    timeout-minutes: 5
     strategy:
       fail-fast: false
       matrix:
         command:
+          - node ./dist/index.mjs create
           - node ./dist/index.mjs
+          - tsx src/index.ts create
           - tsx src/index.ts
-          - npx create-breadboard --
-          - npx create-breadboard
-          - npx create-breadboard create
-          - npx . --
-          - npx .
-          - npx . create
-          - npx . -- create
+          - npm exec . create
+          - npm exec .
         template:
           - vite-vue-ts
           - vite-svelte-ts

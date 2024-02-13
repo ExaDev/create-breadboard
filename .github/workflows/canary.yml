@@ -38,8 +38,8 @@ jobs:
           - node ./dist/index.mjs
           - tsx src/index.ts create
           - tsx src/index.ts
-          - npm exec . create
-          - npm exec .
+          - npm exec . -- create
+          - npm exec . --
         template:
           - vite-vue-ts
           - vite-svelte-ts

@@ -33,9 +33,7 @@ jobs:
       fail-fast: false
       matrix:
         command:
-          - node ./dist/index.mjs --
           - node ./dist/index.mjs
-          - tsx src/index.ts --
           - tsx src/index.ts
           - npx create-breadboard --
           - npx create-breadboard

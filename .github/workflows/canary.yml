@@ -1,18 +1,88 @@
-name: Publish canary
+name: Test and publish canary
 
 on:
-  workflow_dispatch:
-  workflow_run:
-    workflows:
-      - Test
+  push:
     branches:
-      - main
-      - develop
-    types:
-      - completed
+      - "*"
+    tags-ignore:
+      - "*"
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: ./.github/actions/setup
+        with:
+          regular-install: true
+      - run: npm run build
+      - run: ls -la
+      - run: ls -la dist
+      - uses: actions/upload-artifact@main
+        with:
+          name: dist
+          path: dist
+
+  test:
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        command:
+          - node ./dist/index.mjs create
+          - node ./dist/index.mjs
+          - tsx src/index.ts create
+          - tsx src/index.ts
+          # - npm exec . -- create # this and bellow work locally, not in CI
+          # - npx . -- create
+          # - npx . --
+          # - npm exec . --
+        template:
+          - vite-vue-ts
+          - vite-svelte-ts
+    needs: build
+    runs-on: ubuntu-latest
+    permissions: read-all
+    steps:
+      - uses: actions/checkout@main
+      - uses: ./.github/actions/setup
+        with:
+          regular-install: true
+      - uses: actions/download-artifact@main
+        with:
+          name: dist
+          path: dist
+      - run: |
+          if [ -d ${{ matrix.template }} ]; then
+            echo "Directory with name of the template exists"
+            exit 1
+          fi
+      - run: ls -al
+      - run: ls -al dist || true
+      - run: npm install
+      - run: npm install -g tsx
+      - run: npm run install:global
+      - run: ${{ matrix.command }} ${{ env.TEST_ARGS }}
+        timeout-minutes: 5
+        env:
+          TEST_ARGS: "--template ${{ matrix.template }} ${{ matrix.template }}"
+      - run: ls -la ${{ matrix.template }}
+      - run: |
+          if [ -d ${{ matrix.template }} ]; then
+            echo "Directory with name of the template exists"
+          else
+            echo "Directory with name of the template does not exist"
+            exit 1
+          fi
+
   setup:
+    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
+    needs: test
     runs-on: ubuntu-latest
     outputs:
       timestamp: ${{ steps.timestamp.outputs.time }}
@@ -23,7 +93,6 @@ jobs:
       minute: ${{ steps.minute.outputs.minute }}
       second: ${{ steps.second.outputs.second }}
       date_string: ${{ steps.timestamp.outputs.year }}_${{ steps.timestamp.outputs.month }}_${{ steps.timestamp.outputs.day }}-${{ steps.timestamp.outputs.hour }}${{ steps.timestamp.outputs.minute }}${{ steps.timestamp.outputs.second }}
-      workflow_run_trigger_id: ${{ steps.workflow_run_trigger_id.outputs.WORKFLOW_RUN_ID }}
     steps:
       - name: Generate timestamp
         id: timestamp
@@ -40,8 +109,6 @@ jobs:
         run: echo "minute=$(date +%M)" >> $GITHUB_OUTPUT
       - id: second
         run: echo "second=$(date +%S)" >> $GITHUB_OUTPUT
-      - id: workflow_run_trigger_id
-        run: echo "WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
 
   version:
     needs:
@@ -65,12 +132,12 @@ jobs:
           IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
           PATCH_VERSION=$((VERSION_PARTS[2] + 1))
           INCREMENTED_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
-          echo "INCREMENTED_VERSION=$INCREMENTED_VERSION" >> $GITHUB_ENV
+          echo "INCREMENTED_VERSION=$INCREMENTED_VERSION" >> $GITHUB_OUTPUT
 
       - name: Make new version number
         id: make_version
         run: |
-          NEW_VERSION="${{ env.INCREMENTED_VERSION }}-${{ github.ref_name }}-${{ needs.setup.outputs.timestamp }}-${{ steps.short_sha.outputs.SHORT_SHA }}"
+          NEW_VERSION="${{ steps.increment_version.outputs.INCREMENTED_VERSION }}-${{ github.ref_name }}-${{ needs.setup.outputs.timestamp }}-${{ steps.short_sha.outputs.SHORT_SHA }}"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "$NEW_VERSION"
 
@@ -90,8 +157,9 @@ jobs:
       - setup
       - version
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    permissions: read-all
+    outputs:
+      command: npx create-breadboard@${{ needs.version.outputs.new_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -105,7 +173,6 @@ jobs:
         uses: actions/download-artifact@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ needs.setup.outputs.workflow_run_trigger_id }}
           name: dist
           path: dist
 
@@ -115,9 +182,10 @@ jobs:
           name: package_json
 
       - name: Set dist tag to branch name
-        run: echo DIST_TAG=${{ github.ref_name }} >> $GITHUB_ENV
+        id: dist_tag
+        run: echo DIST_TAG=${{ github.ref_name }} >> $GITHUB_OUTPUT
 
       - name: Publish to NPM
-        run: npm publish --tag=${{ env.DIST_TAG }}
+        run: npm publish --tag=${{ steps.dist_tag.outputs.DIST_TAG }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

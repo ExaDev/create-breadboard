@@ -54,7 +54,7 @@ npx create-breadboard
 npm exec create-breadboard
 ```
 
-## Supported templates\
+## Supported template
 
 ### Vite based templates
 
@@ -74,4 +74,12 @@ Derived from [create-vite/svelte-ts](https://github.com/vitejs/vite/tree/main/pa
 
 ```bash
 npm create breadboard --template vite-svelte-ts
+```
+
+#### React + TypeScript + Vite + Breadboard
+
+Derived from [create-vite/react-ts](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts)
+
+```bash
+npm create breadboard --template vite-react-ts
 ```

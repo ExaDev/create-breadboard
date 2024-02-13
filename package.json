@@ -1,21 +1,30 @@
 {
 	"author": "",
 	"bin": {
-		"create-breadboard": "index.js"
+		"cb": "./dist/index.cjs",
+		"cba": "./dist/index.cjs",
+		"create-breadboard": "./dist/index.cjs",
+		"create-breadboard-app": "./dist/index.cjs"
 	},
 	"dependencies": {
+		"@commander-js/extra-typings": "^12.0.0",
 		"commander": "^12.0.0",
-		"fs-extra": "^11.2.0"
+		"fs-extra": "^11.2.0",
+		"inquirer": "^9.2.14"
 	},
 	"description": "",
 	"devDependencies": {
 		"@types/commander": "^2.12.2",
+		"@types/estree": "^1.0.5",
 		"@types/fs-extra": "^11.0.4",
 		"@types/inquirer": "^9.0.7",
+		"@types/jsonfile": "^6.1.4",
 		"@types/node": "^20.11.17",
-		"inquirer": "^9.2.14",
+		"@types/through": "^0.0.33",
+		"tsx": "^4.7.1",
 		"typescript": "^5.3.3",
-		"unbuild": "^2.0.0"
+		"unbuild": "^2.0.0",
+		"wireit": "^0.14.4"
 	},
 	"exports": {
 		".": {
@@ -31,20 +40,111 @@
 	"license": "ISC",
 	"main": "./dist/index.cjs",
 	"name": "create-breadboard",
+	"packageManager": "yarn@4.1.0",
 	"registry": "https://registry.npmjs.org/",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/ExaDev-io/create-breadboard"
 	},
 	"scripts": {
-		"build": "unbuild && chmod +x ./dist/*",
-		"dev": "unbuild --stub",
-		"prepublishOnly": "chmod +x ./dist/*",
-		"test:js": "npm i -g . && npx create-breadboard",
-		"test:ts": "npx -y tsx src/index.ts",
-		"typecheck": "tsc --noEmit"
+		"build": "wireit",
+		"dev": "wireit",
+		"help:js": "wireit",
+		"help:ts": "wireit",
+		"install:global": "wireit",
+		"prepublishOnly": "wireit",
+		"start:js": "wireit",
+		"start:npx": "wireit",
+		"start:ts": "wireit",
+		"test:js": "wireit",
+		"test:npx": "wireit",
+		"test:ts": "wireit",
+		"typecheck": "wireit"
 	},
 	"type": "module",
 	"types": "./dist/index.d.ts",
-	"version": "1.0.17"
+	"version": "1.0.17",
+	"wireit": {
+		"build": {
+			"command": "unbuild && chmod +x ./dist/*",
+			"files": [
+				"src/**",
+				"package.json",
+				"tsconfig.json"
+			],
+			"output": [
+				"dist"
+			]
+		},
+		"dev": {
+			"command": "unbuild --stub"
+		},
+		"help:js": {
+			"command": "npm run start:js help create"
+		},
+		"help:ts": {
+			"command": "npm run start:ts help create"
+		},
+		"install:global": {
+			"command": "npm i -g .",
+			"dependencies": [
+				"build"
+			],
+			"files": [
+				"package.json",
+				"dist/**"
+			],
+			"output": []
+		},
+		"prepublishOnly": {
+			"dependencies": [
+				"build"
+			],
+			"files": [
+				"package.json",
+				"index.js",
+				"dist/**",
+				"templates/**"
+			]
+		},
+		"start:js": {
+			"command": "node ./dist/index.mjs",
+			"dependencies": [
+				"build"
+			],
+			"files": [
+				"dist/**"
+			],
+			"output": []
+		},
+		"start:npx": {
+			"command": "npx create-breadboard",
+			"dependencies": [
+				"build",
+				"install:global"
+			],
+			"files": []
+		},
+		"start:ts": {
+			"command": "tsx src/index.ts"
+		},
+		"test:js": {
+			"command": "npm run start:js -- --template vite-svelte-ts output",
+			"dependencies": [
+				"build"
+			]
+		},
+		"test:npx": {
+			"command": "npx create-breadboard -- --template vite-svelte-ts output",
+			"dependencies": [
+				"install:global"
+			]
+		},
+		"test:ts": {
+			"command": "npm run start:ts -- --template vite-svelte-ts output"
+		},
+		"typecheck": {
+			"command": "tsc --noEmit"
+		}
+	}
 }

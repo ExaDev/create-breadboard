@@ -29,7 +29,7 @@ function useTemplate(template: string, target: string): void {
 function throwIfFunctionNonInteractive() {
 	if (!shellIsInteractive()) {
 		logError(helpText);
-		throw new Error("Template is required");
+		throw new Error("Shell is not interactive");
 	}
 }
 

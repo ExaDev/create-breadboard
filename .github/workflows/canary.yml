@@ -37,8 +37,11 @@ jobs:
           - tsx src/index.ts
           - npx create-breadboard --
           - npx create-breadboard
+          - npx create-breadboard create
           - npx . --
           - npx .
+          - npx . create
+          - npx . -- create
         template:
           - vite-vue-ts
           - vite-svelte-ts
@@ -59,13 +62,12 @@ jobs:
             echo "Directory with name of the template exists"
             exit 1
           fi
-      - run: |
-          ls -al
-          ls -al dist || true
-          npm install
-          npm install -g tsx
-          npm run install:global
-          ${{ matrix.command }} ${{ env.TEST_ARGS }}
+      - run: ls -al
+      - run: ls -al dist || true
+      - run: npm install
+      - run: npm install -g tsx
+      - run: npm run install:global
+      - run: ${{ matrix.command }} ${{ env.TEST_ARGS }}
         env:
           TEST_ARGS: "--template ${{ matrix.template }} ${{ matrix.template }}"
       - run: ls -la ${{ matrix.template }}

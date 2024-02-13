@@ -1163,8 +1163,10 @@ __metadata:
     unbuild: "npm:^2.0.0"
     wireit: "npm:^0.14.4"
   bin:
+    cb: index.js
     cba: index.js
     create-breadboard: index.js
+    create-breadboard-app: index.js
   languageName: unknown
   linkType: soft
 

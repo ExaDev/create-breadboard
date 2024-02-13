@@ -8,7 +8,8 @@ on:
 jobs:
   publish:
     if : github.event_name == 'release' && github.event.action == 'published'
-    permissions: read-all
+    permissions:
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

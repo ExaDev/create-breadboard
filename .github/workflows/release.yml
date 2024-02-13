@@ -214,6 +214,8 @@ jobs:
 
   publish:
     if: ${{ github.event.inputs.draft == 'false' && github.event.inputs.prerelease == 'false' }}
+    permissions:
+      id-token: write
     needs:
       - release
       - build

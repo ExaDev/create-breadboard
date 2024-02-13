@@ -38,8 +38,10 @@ jobs:
           - node ./dist/index.mjs
           - tsx src/index.ts create
           - tsx src/index.ts
-          - npm exec . -- create
-          - npm exec . --
+          # - npm exec . -- create # this and bellow work locally, not in CI
+          # - npx . -- create
+          # - npx . --
+          # - npm exec . --
         template:
           - vite-vue-ts
           - vite-svelte-ts

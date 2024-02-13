@@ -26,6 +26,17 @@ function useTemplate(template: string, target: string): void {
 	});
 }
 
+function throwIfFunctionNonInteractive() {
+	if (!shellIsInteractive()) {
+		logError(helpText);
+		throw new Error("Template is required");
+	}
+}
+
+function shellIsInteractive() {
+	return process.stdout.isTTY;
+}
+
 type ConfigObject = {
 	template: {
 		default?: string;
@@ -276,8 +287,11 @@ createCommand.addOption(modeOption);
 const targetArgument = new Argument("[target]", "Target directory");
 createCommand.addArgument(targetArgument);
 
+const helpText = program.helpInformation();
+
 createCommand.action(async (arg: string, options) => {
 	while (!responseValueIsValid(options.template)) {
+		throwIfFunctionNonInteractive();
 		const response = await inquirer.prompt([
 			{
 				type: "list",
@@ -294,6 +308,7 @@ createCommand.action(async (arg: string, options) => {
 		!isValidPath(arg, true) ||
 		isExistentFile(arg, true)
 	) {
+		throwIfFunctionNonInteractive();
 		const response = await inquirer.prompt([
 			{
 				type: "input",

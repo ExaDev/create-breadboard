@@ -90,6 +90,10 @@
 			"dependencies": [
 				"build"
 			],
+			"files": [
+				"package.json",
+				"dist/**"
+			],
 			"output": []
 		},
 		"prepublishOnly": {

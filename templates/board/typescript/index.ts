@@ -1,5 +1,4 @@
 import { InputValues, OutputValues, base, board, code } from "@google-labs/breadboard";
-import { merMake } from "../../util/merMake.js";
 
 const myBoard = board<InputValues, OutputValues>(({}, { output }) => {
   const inputNodeOne = base.input({
@@ -49,8 +48,3 @@ console.log(
     2
   )
 );
-
-await merMake({
-  graph: myBoard,
-  destination: import.meta.dirname,
-});

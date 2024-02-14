@@ -1,0 +1,17 @@
+{
+  "name": "vanilla-ts",
+  "private": true,
+  "version": "0.0.0",
+  "dependencies": {
+		"@google-labs/breadboard": "0.10.1"
+	},
+	"devDependencies": {
+		"@types/node": "^20.11.16",
+		"tsx": "^4.7.0",
+		"typescript": "^5.3.3"
+	},
+  "scripts": {
+    "test": "tsx index.ts"
+  },
+  "type": "module"
+}

@@ -1,0 +1,31 @@
+{
+	"$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
+	"nodes": [
+		{
+			"id": "node1",
+			"type": "input",
+			"configuration": {
+				"schema": {
+					"type": "object",
+					"properties": {
+						"inputMessage": {
+							"type": "string"
+						}
+					}
+				}
+			}
+		},
+		{
+			"id": "node2",
+			"type": "output"
+		}
+	],
+	"edges": [
+		{
+			"from": "node1",
+			"to": "node2",
+			"out": "inputMessage",
+			"in": "outputMessage"
+		}
+	]
+}

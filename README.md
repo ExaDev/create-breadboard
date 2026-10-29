@@ -1,6 +1,6 @@
 # create-[breadboard](https://github.com/breadboard-ai/breadboard)
 
-[![npm version](https://badge.fury.io/js/create-breadboard.svg)](https://badge.fury.io/js/create-breadboard)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=white)](https://github.com/ExaDev/create-breadboard) [![npm](https://img.shields.io/badge/npm-CB3837?logo=npm&logoColor=white)](https://www.npmjs.com/package/create-breadboard) [![Release](https://img.shields.io/github/v/release/ExaDev/create-breadboard)](https://github.com/ExaDev/create-breadboard/releases/latest)
 
 Scaffold an applicating that uses [breadboard](https://github.com/breadboard-ai/breadboard)
 
